@@ -4,46 +4,42 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:UdsTool"
-        xmlns:viewmodels="clr-namespace:UdsTool.ViewModels"
         xmlns:views="clr-namespace:UdsTool.Views"
+        xmlns:viewModels="clr-namespace:UdsTool.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="{Binding Title}" 
+        Height="768" 
+        Width="1024" 
+        WindowStartupLocation="CenterScreen">
+
     <Window.Resources>
-        <DataTemplate DataType="{x:Type viewmodels:XmlEditorViewModel}">
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Margin" Value="5,0" />
+            <Setter Property="Padding" Value="15,8" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <!-- ViewModel에 따른 View 데이터 템플릿 -->
+        <DataTemplate DataType="{x:Type viewModels:XmlEditorViewModel}">
             <views:XmlEditorView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:EcuCommunicationViewModel}">
+
+        <DataTemplate DataType="{x:Type viewModels:EcuCommunicationViewModel}">
             <views:EcuCommunicationView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:IsoTpSettingsViewModel}">
+            <views:IsoTpSettingsView />
         </DataTemplate>
     </Window.Resources>
 
     <DockPanel>
-        <!-- Main menu -->
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Exit" Click="MenuItem_Exit_Click"/>
-            </MenuItem>
-            <MenuItem Header="_View">
-                <MenuItem Header="_XML Editor" Command="{Binding ShowXmlEditorCommand}"/>
-                <MenuItem Header="_ECU Communication" Command="{Binding ShowEcuCommunicationCommand}"/>
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About" Click="MenuItem_About_Click"/>
-            </MenuItem>
-        </Menu>
-
-        <!-- Navigation panel -->
-        <StackPanel DockPanel.Dock="Left" Width="150" Background="#F0F0F0">
-            <TextBlock Text="Navigation" FontWeight="Bold" Margin="10,10,10,5"/>
-            <Button Content="XML Editor" 
-                    Command="{Binding ShowXmlEditorCommand}" 
-                    Margin="10,5" Padding="5"/>
-            <Button Content="ECU Communication" 
-                    Command="{Binding ShowEcuCommunicationCommand}" 
-                    Margin="10,5" Padding="5"/>
+        <!-- 상단 메뉴 바 -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="#F0F0F0" Margin="0,0,0,5">
+            <Button Content="XML 편집" Style="{StaticResource NavButtonStyle}" Command="{Binding ShowXmlEditorCommand}" />
+            <Button Content="ECU 통신" Style="{StaticResource NavButtonStyle}" Command="{Binding ShowEcuCommunicationCommand}" />
         </StackPanel>
 
-        <!-- Main content area -->
-        <ContentControl Content="{Binding CurrentViewModel}"/>
+        <!-- 메인 콘텐츠 영역 -->
+        <ContentControl Content="{Binding CurrentView}" />
     </DockPanel>
 </Window>

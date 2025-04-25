@@ -5,16 +5,50 @@
              xmlns:converters="clr-namespace:UdsTool.Converters">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- Value Converters -->
-            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-            <converters:BoolToResponseTypeConverter x:Key="BoolToResponseTypeConverter" />
-            <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatusConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 여기에 리소스 사전을 추가할 수 있습니다 -->    
+            </ResourceDictionary.MergedDictionaries>
+            <!-- 컨버터 정의 -->
             <converters:NotNullConverter x:Key="NotNullConverter" />
-
-            <!-- Common Button Style -->
-            <Style TargetType="Button">
+            <converters:BoolToDirectionConverter x:Key="BoolToDirectionConverter" />
+            <converters:VisibilityConverter x:Key="VisibilityConverter" />
+            <converters:HexConverter x:Key="HexConverter" />
+            
+            <!-- 기본 스타일 -->
+            <Style TargetType="{x:Type Button}">
+                <Setter Property="Margin" Value="5" />
                 <Setter Property="Padding" Value="10,5" />
-                <Setter Property="Margin" Value="3" />
+            </Style>
+
+            <Style TargetType="{x:Type TextBox}">
+                <Setter Property="Margin" Value="5" />
+                <Setter Property="Padding" Value="5,3" />
+            </Style>
+
+            <Style TargetType="{x:Type ComboBox}">
+                <Setter Property="Margin" Value="5" />
+                <Setter Property="Padding" Value="5,3" />
+            </Style>
+
+            <Style TargetType="{x:Type TreeView}">
+                <Setter Property="Margin" Value="5" />
+            </Style>
+            <Style TargetType="{x:Type ListView}">
+                <Setter Property="Margin" Value="5" />
+            </Style>
+
+            <Style TargetType="{x:Type Grid}">
+                <Setter Property="Margin" Value="0" />
+            </Style>
+
+            <Style TargetType="{x:Type Label}">
+                <Setter Property="Margin" Value="5,5,5,2" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+
+            <Style TargetType="{x:Type GroupBox}">
+                <Setter Property="Margin" Value="5" />
+                <Setter Property="Padding" Value="5" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

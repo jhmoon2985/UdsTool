@@ -3,6 +3,7 @@ using System;
 using System.Configuration;
 using System.Data;
 using System.Windows;
+using System.Windows.Navigation;
 using UdsTool.Services;
 using UdsTool.ViewModels;
 using UdsTool.Views;
@@ -26,18 +27,18 @@ public partial class App : Application
     private void ConfigureServices(ServiceCollection services)
     {
         // Register services
+        services.AddSingleton<INavigationService, Services.NavigationService>();
         services.AddSingleton<IXmlService, XmlService>();
         services.AddSingleton<IEcuCommunicationService, EcuCommunicationService>();
 
         // Register view models
+        services.AddSingleton<MainViewModel>();
         services.AddSingleton<XmlEditorViewModel>();
         services.AddSingleton<EcuCommunicationViewModel>();
-        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<IsoTpSettingsViewModel>();
 
-        // Register views
-        services.AddTransient<XmlEditorView>();
-        services.AddTransient<EcuCommunicationView>();
-        services.AddTransient<MainWindow>();
+        // Register Main Window
+        services.AddSingleton<MainWindow>();
     }
 
     protected override void OnStartup(StartupEventArgs e)

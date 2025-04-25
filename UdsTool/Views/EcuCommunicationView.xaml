@@ -4,8 +4,17 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:UdsTool.Views"
+             xmlns:models="clr-namespace:UdsTool.Models"
+             xmlns:converters="clr-namespace:UdsTool.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="700" d:DesignWidth="1000">
+
+    <UserControl.Resources>
+        <converters:NotNullConverter x:Key="NotNullConverter" />
+        <converters:BoolToDirectionConverter x:Key="BoolToDirectionConverter" />
+        <converters:VisibilityConverter x:Key="VisibilityConverter" />
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -13,142 +22,146 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Toolbar -->
-        <ToolBarTray Grid.Row="0">
-            <ToolBar>
-                <Button Command="{Binding LoadConfigurationCommand}" ToolTip="Load Configuration">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Load Config" Margin="3,0"/>
-                    </StackPanel>
-                </Button>
-                <Separator/>
-                <Button Command="{Binding ConnectCommand}" ToolTip="Connect to ECU">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Connect" Margin="3,0"/>
-                    </StackPanel>
-                </Button>
-                <Button Command="{Binding DisconnectCommand}" ToolTip="Disconnect from ECU">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Disconnect" Margin="3,0"/>
-                    </StackPanel>
-                </Button>
-                <Separator/>
-                <Button Command="{Binding ClearHistoryCommand}" ToolTip="Clear Response History">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Clear History" Margin="3,0"/>
-                    </StackPanel>
-                </Button>
-            </ToolBar>
-        </ToolBarTray>
+        <!-- 툴바 -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Background="#F5F5F5" Margin="0,0,0,5">
+            <TextBlock Text="포트:" VerticalAlignment="Center" Margin="5" />
+            <TextBox Text="{Binding PortName}" Width="80" />
+            <Button Content="연결" Command="{Binding ConnectCommand}" />
+            <Button Content="연결 해제" Command="{Binding DisconnectCommand}" />
+            <Separator Margin="5,0" />
+            <Button Content="설정 로드" Command="{Binding LoadConfigCommand}" />
+            <Button Content="ISO-TP 설정 저장" Command="{Binding SaveIsoTpSettingsCommand}" />
+            <Button Content="로그 지우기" Command="{Binding ClearLogsCommand}" />
+        </StackPanel>
 
-        <!-- Main content area -->
+        <!-- 메인 컨텐츠 -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="1*" MinWidth="300"/>
                 <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="2*" MinWidth="400"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left panel - Commands and connection settings -->
+            <!-- 왼쪽 패널 - 트리뷰 및 요청 편집 -->
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="1*"/>
+                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="1*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Command List -->
-                <GroupBox Header="UDS Commands" Grid.Row="0">
-                    <Grid>
-                        <ListBox ItemsSource="{Binding Commands}" 
-                                 SelectedItem="{Binding SelectedCommand}"
-                                 DisplayMemberPath="Name"
-                                 Margin="5"/>
-                    </Grid>
+                <!-- UDS 설정 트리뷰 -->
+                <GroupBox Grid.Row="0" Header="UDS 서비스">
+                    <TreeView ItemsSource="{Binding Services}">
+                        <TreeView.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type models:UdsSid}" ItemsSource="{Binding Subfunctions}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                                    <TextBlock Text=" - " />
+                                    <TextBlock Text="{Binding Id}" Foreground="Blue" />
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+
+                            <HierarchicalDataTemplate DataType="{x:Type models:UdsSubfunction}" ItemsSource="{Binding Dids}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}" />
+                                    <TextBlock Text=" - " />
+                                    <TextBlock Text="{Binding Id}" Foreground="Green" />
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+
+                            <DataTemplate DataType="{x:Type models:UdsDid}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}" />
+                                    <TextBlock Text=" - " />
+                                    <TextBlock Text="{Binding Id}" Foreground="Purple" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </TreeView.Resources>
+
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="{x:Type TreeViewItem}">
+                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                    </TreeView>
                 </GroupBox>
 
-                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="#DDDDDD"/>
+                <!-- 스플리터 -->
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
-                <!-- Connection Settings -->
-                <GroupBox Header="Connection Settings" Grid.Row="2">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="5">
-                            <TextBlock Text="Interface Type:" Margin="0,5,0,0"/>
-                            <ComboBox SelectedItem="{Binding Configuration.ConnectionSettings.InterfaceType}" Margin="0,0,0,5">
-                                <ComboBoxItem>CAN</ComboBoxItem>
-                                <ComboBoxItem>K-Line</ComboBoxItem>
-                                <ComboBoxItem>Ethernet</ComboBoxItem>
-                            </ComboBox>
+                <!-- 요청 편집 -->
+                <GroupBox Grid.Row="2" Header="요청 편집">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                            <TextBlock Text="Device ID:" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding Configuration.ConnectionSettings.DeviceId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
+                        <TextBox Grid.Row="0" Text="{Binding RequestText, UpdateSourceTrigger=PropertyChanged}" 
+                                 AcceptsReturn="True" TextWrapping="Wrap" />
 
-                            <TextBlock Text="Baudrate:" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding Configuration.ConnectionSettings.Baudrate, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
-
-                            <TextBlock Text="Source Address (Hex):" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding Configuration.ConnectionSettings.SourceAddress, StringFormat=X2, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
-
-                            <TextBlock Text="Target Address (Hex):" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding Configuration.ConnectionSettings.TargetAddress, StringFormat=X2, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
-
-                            <TextBlock Text="Timeout (ms):" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding Configuration.ConnectionSettings.TimeoutMs, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
-
-                            <Button Content="Send Command" 
-                                    Command="{Binding SendCommand}"
-                                    Margin="0,10,0,5" Padding="5"
-                                    Background="#007ACC" Foreground="White"/>
-                        </StackPanel>
-                    </ScrollViewer>
+                        <Button Grid.Row="1" Content="요청 전송" Command="{Binding SendRequestCommand}" 
+                                HorizontalAlignment="Right" Margin="0,5,0,0" />
+                    </Grid>
                 </GroupBox>
             </Grid>
 
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#DDDDDD"/>
+            <!-- 스플리터 -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
 
-            <!-- Right panel - Response viewer -->
+            <!-- 오른쪽 패널 - 통신 프레임 표시 -->
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Last Response -->
-                <GroupBox Header="Last Response" Grid.Row="0">
-                    <Grid Margin="5">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                <!-- ISO-TP 설정 섹션 -->
+                <Expander Grid.Row="0" Header="ISO-TP 설정" IsExpanded="False">
+                    <ContentControl Content="{Binding IsoTpSettings}" />
+                </Expander>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Type:" Margin="0,5,5,0"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding LastResponse.IsPositive, Converter={StaticResource BoolToResponseTypeConverter}}" Margin="0,5,0,0"/>
-
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Service ID:" Margin="0,5,5,0"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LastResponse.ServiceId, StringFormat=0x{0:X2}}" Margin="0,5,0,0"/>
-
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Raw Data:" Margin="0,5,5,0"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding LastResponse.ResponseAsHex}" Margin="0,5,0,0"
-                                   TextWrapping="Wrap"/>
-                    </Grid>
-                </GroupBox>
-
-                <!-- Response History -->
-                <GroupBox Header="Response History" Grid.Row="1" Grid.RowSpan="3">
-                    <ListView ItemsSource="{Binding ResponseHistory}" Margin="5">
+                <!-- 프레임 로그 -->
+                <GroupBox Grid.Row="1" Header="프레임 로그">
+                    <ListView ItemsSource="{Binding Frames}">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Header="Time" DisplayMemberBinding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="100"/>
-                                <GridViewColumn Header="Type" DisplayMemberBinding="{Binding IsPositive, Converter={StaticResource BoolToResponseTypeConverter}}" Width="80"/>
-                                <GridViewColumn Header="SID" DisplayMemberBinding="{Binding ServiceId, StringFormat=0x{0:X2}}" Width="60"/>
-                                <GridViewColumn Header="Data" DisplayMemberBinding="{Binding ResponseAsHex}" Width="300"/>
+                                <GridViewColumn Header="시간" Width="150">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Timestamp, StringFormat=\{0:yyyy-MM-dd HH:mm:ss.fff\}}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="타입" Width="100">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding FrameType}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="방향" Width="80">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding IsTransmitted, Converter={StaticResource BoolToDirectionConverter}}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="데이터" Width="300">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding HexData}" TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="설명" Width="200">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
                             </GridView>
                         </ListView.View>
                     </ListView>
@@ -156,17 +169,9 @@
             </Grid>
         </Grid>
 
-        <!-- Status bar -->
-        <StatusBar Grid.Row="2">
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusMessage}"/>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock>
-                    <Run Text="Connection Status:"/>
-                    <Run Text="{Binding IsConnected, Converter={StaticResource BoolToConnectionStatusConverter}}"/>
-                </TextBlock>
-            </StatusBarItem>
+        <!-- 상태 표시줄 -->
+        <StatusBar Grid.Row="2" Background="#F0F0F0">
+            <TextBlock Text="{Binding StatusMessage}" />
         </StatusBar>
     </Grid>
 </UserControl>

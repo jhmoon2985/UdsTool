@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="UdsTool.Views.IsoTpSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:UdsTool.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="500">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 왼쪽 설정 -->
+        <GroupBox Grid.Column="0" Header="Flow Control 설정">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Label Grid.Row="0" Grid.Column="0" Content="Block Size:" />
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding BlockSize}" />
+
+                <Label Grid.Row="1" Grid.Column="0" Content="STmin (ms):" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding STmin}" />
+
+                <Label Grid.Row="2" Grid.Column="0" Content="Request ID:" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding RequestId, StringFormat=0x\{0:X\}}" />
+
+                <Label Grid.Row="3" Grid.Column="0" Content="Response ID:" />
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ResponseId, StringFormat=0x\{0:X\}}" />
+
+                <Label Grid.Row="4" Grid.Column="0" Content="Timeout (ms):" />
+                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding TimeoutMs}" />
+            </Grid>
+        </GroupBox>
+
+        <!-- 오른쪽 설정 -->
+        <GroupBox Grid.Column="1" Header="프레임 설정">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Label Grid.Row="0" Grid.Column="0" Content="최대 프레임 크기:" />
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding MaxFrameSize}" />
+
+                <Label Grid.Row="1" Grid.Column="0" Content="FF 데이터 크기:" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding FirstFrameDataSize}" />
+
+                <Label Grid.Row="2" Grid.Column="0" Content="CF 데이터 크기:" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ConsecutiveFrameDataSize}" />
+
+                <Label Grid.Row="3" Grid.Column="0" Content="FC 타임아웃 (ms):" />
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding FlowControlTimeoutMs}" />
+
+                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Button Content="불러오기" Command="{Binding LoadSettingsCommand}" Margin="0,0,5,0" />
+                    <Button Content="적용" Command="{Binding ApplySettingsCommand}" Margin="0,0,5,0" />
+                    <Button Content="초기화" Command="{Binding ResetSettingsCommand}" />
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</UserControl>

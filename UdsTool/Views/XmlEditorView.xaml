@@ -3,136 +3,264 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
              xmlns:local="clr-namespace:UdsTool.Views"
+             xmlns:models="clr-namespace:UdsTool.Models"
+             xmlns:converters="clr-namespace:UdsTool.Converters"
+             xmlns:behaviors="clr-namespace:UdsTool.Behaviors"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="700" d:DesignWidth="1000">
+
+    <UserControl.Resources>
+        <converters:NotNullConverter x:Key="NotNullConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Toolbar -->
-        <ToolBarTray Grid.Row="0">
-            <ToolBar>
-                <Button Command="{Binding NewConfigurationCommand}" ToolTip="New Configuration">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="New" Margin="3,0"/>
-                    </StackPanel>
-                </Button>
-                <Button Command="{Binding OpenConfigurationCommand}" ToolTip="Open Configuration">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Open" Margin="3,0"/>
-                    </StackPanel>
-                </Button>
-                <Button Command="{Binding SaveConfigurationCommand}" ToolTip="Save Configuration">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Save" Margin="3,0"/>
-                    </StackPanel>
-                </Button>
-                <Button Command="{Binding SaveAsConfigurationCommand}" ToolTip="Save As">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Save As" Margin="3,0"/>
-                    </StackPanel>
-                </Button>
-                <Separator/>
-                <Button Command="{Binding UpdateFromXmlCommand}" ToolTip="Update from XML">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Update from XML" Margin="3,0"/>
-                    </StackPanel>
-                </Button>
-            </ToolBar>
-        </ToolBarTray>
+        <!-- 툴바 -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Background="#F5F5F5" Margin="0,0,0,5">
+            <Button Content="새 파일" Command="{Binding NewConfigCommand}" />
+            <Button Content="열기" Command="{Binding OpenConfigCommand}" />
+            <Button Content="저장" Command="{Binding SaveConfigCommand}" />
+            <Button Content="다른 이름으로 저장" Command="{Binding SaveAsConfigCommand}" />
+            <Separator Margin="5,0" />
+            <Button Content="SID 추가" Command="{Binding AddSidCommand}" />
+            <Button Content="Subfunction 추가" Command="{Binding AddSubfunctionCommand}" />
+            <Button Content="DID 추가" Command="{Binding AddDidCommand}" />
+            <Button Content="데이터 항목 추가" Command="{Binding AddDataItemCommand}" />
+            <Separator Margin="5,0" />
+            <Button Content="삭제" Command="{Binding DeleteCommand}" />
+        </StackPanel>
 
-        <!-- Main content area -->
+        <!-- 메인 컨텐츠 -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="1*" MinWidth="300"/>
                 <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="2*" MinWidth="400"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left panel - Command list and properties -->
-            <Grid Grid.Column="0">
+            <!-- 트리 뷰 -->
+            <TreeView Grid.Column="0" ItemsSource="{Binding Services}">
+                <i:Interaction.Behaviors>
+                    <behaviors:TreeViewBehavior SelectedItem="{Binding SelectedItem, Mode=TwoWay}" />
+                </i:Interaction.Behaviors>
+                <TreeView.Resources>
+                    <HierarchicalDataTemplate DataType="{x:Type models:UdsSid}" ItemsSource="{Binding Subfunctions}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                            <TextBlock Text=" - " />
+                            <TextBlock Text="{Binding Id}" Foreground="Blue" />
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+
+                    <HierarchicalDataTemplate DataType="{x:Type models:UdsSubfunction}" ItemsSource="{Binding Dids}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Text=" - " />
+                            <TextBlock Text="{Binding Id}" Foreground="Green" />
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+
+                    <HierarchicalDataTemplate DataType="{x:Type models:UdsDid}" ItemsSource="{Binding DataItems}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Text=" - " />
+                            <TextBlock Text="{Binding Id}" Foreground="Purple" />
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+
+                    <DataTemplate DataType="{x:Type models:UdsDataItem}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Text=" - " />
+                            <TextBlock Text="{Binding Length}" />
+                            <TextBlock Text=" " />
+                            <TextBlock Text="{Binding Unit}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </TreeView.Resources>
+
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}">
+                        <Setter Property="IsExpanded" Value="True" />
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    </Style>
+                </TreeView.ItemContainerStyle>
+            </TreeView>
+
+            <!-- 스플리터 -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
+
+            <!-- 속성 편집 영역 - 모든 속성을 한 화면에 표시 -->
+            <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Command List -->
-                <GroupBox Header="UDS Commands" Grid.Row="0">
-                    <Grid>
+                <!-- 헤더 -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="속성 편집" FontWeight="Bold" Margin="10,5" />
+
+                    <!-- 통합 저장 버튼 -->
+                    <Button Grid.Column="1" Content="변경사항 저장" Command="{Binding SaveChangesCommand}" 
+                            IsEnabled="{Binding IsModified}" Padding="10,5" Margin="5" />
+                </Grid>
+
+                <!-- 속성 편집 폼 -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <ListBox Grid.Row="0" 
-                                 ItemsSource="{Binding Commands}" 
-                                 SelectedItem="{Binding SelectedCommand}"
-                                 DisplayMemberPath="Name"
-                                 Margin="5"/>
+                        <!-- SID 속성 섹션 -->
+                        <GroupBox Grid.Row="0" Header="SID 속성" Margin="0,0,0,10">
+                            <Grid IsEnabled="{Binding SelectedSid, Converter={StaticResource NotNullConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
-                            <Button Content="Add" Command="{Binding AddCommandCommand}" Width="75" Margin="5"/>
-                            <Button Content="Remove" Command="{Binding RemoveCommandCommand}" Width="75" Margin="5"/>
-                        </StackPanel>
+                                <Label Grid.Row="0" Grid.Column="0" Content="ID:" />
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedSid.Id, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Content="이름:" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedSid.Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="2" Grid.Column="0" Content="설명:" />
+                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedSid.Description, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="3" Grid.Column="0" Content="값:" />
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedSid.Value, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Subfunction 속성 섹션 -->
+                        <GroupBox Grid.Row="1" Header="Subfunction 속성" Margin="0,0,0,10">
+                            <Grid IsEnabled="{Binding SelectedSubfunction, Converter={StaticResource NotNullConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Content="ID:" />
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedSubfunction.Id, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Content="이름:" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedSubfunction.Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="2" Grid.Column="0" Content="설명:" />
+                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedSubfunction.Description, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="3" Grid.Column="0" Content="값:" />
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedSubfunction.Value, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- DID 속성 섹션 -->
+                        <GroupBox Grid.Row="2" Header="DID 속성" Margin="0,0,0,10">
+                            <Grid IsEnabled="{Binding SelectedDid, Converter={StaticResource NotNullConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Content="ID:" />
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDid.Id, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Content="이름:" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedDid.Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="2" Grid.Column="0" Content="설명:" />
+                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDid.Description, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="3" Grid.Column="0" Content="값:" />
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDid.Value, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- 데이터 항목 속성 섹션 -->
+                        <GroupBox Grid.Row="3" Header="데이터 항목 속성" Margin="0,0,0,10">
+                            <Grid IsEnabled="{Binding SelectedDataItem, Converter={StaticResource NotNullConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Content="ID:" />
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDataItem.Id, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Content="이름:" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedDataItem.Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="2" Grid.Column="0" Content="설명:" />
+                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDataItem.Description, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="3" Grid.Column="0" Content="값:" />
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDataItem.Value, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="4" Grid.Column="0" Content="길이:" />
+                                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding SelectedDataItem.Length, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Label Grid.Row="5" Grid.Column="0" Content="단위:" />
+                                <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding SelectedDataItem.Unit, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </GroupBox>
                     </Grid>
-                </GroupBox>
+                </ScrollViewer>
 
-                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="#DDDDDD"/>
-
-                <!-- Command Properties -->
-                <GroupBox Header="Command Properties" Grid.Row="2">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="5" IsEnabled="{Binding SelectedCommand, Converter={StaticResource NotNullConverter}}">
-                            <TextBlock Text="Name:" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding SelectedCommand.Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
-
-                            <TextBlock Text="Service ID (SID) Hex:" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding SelectedCommand.ServiceId, StringFormat=X2, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
-
-                            <TextBlock Text="Subfunction Hex (Optional):" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding SelectedCommand.Subfunction, StringFormat=X2, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
-
-                            <TextBlock Text="DID Hex (Optional):" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding SelectedCommand.Did, StringFormat=X4, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
-
-                            <TextBlock Text="Data (Hex bytes, space separated):" Margin="0,5,0,0"/>
-                            <TextBox Text="{Binding SelectedCommand.Data, UpdateSourceTrigger=PropertyChanged}" 
-                                     AcceptsReturn="True" TextWrapping="Wrap" Height="80" Margin="0,0,0,5"/>
-                        </StackPanel>
-                    </ScrollViewer>
-                </GroupBox>
+                <!-- 하단 삭제 버튼 -->
+                <Button Grid.Row="2" Content="현재 선택 항목 삭제" Command="{Binding DeleteCommand}" 
+                        IsEnabled="{Binding SelectedItem, Converter={StaticResource NotNullConverter}}" 
+                        HorizontalAlignment="Right" Margin="10" Padding="10,5" />
             </Grid>
-
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#DDDDDD"/>
-
-            <!-- Right panel - XML Editor -->
-            <GroupBox Header="XML Content" Grid.Column="2">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBox Grid.Row="0"
-                             Text="{Binding XmlContent, UpdateSourceTrigger=PropertyChanged}"
-                             AcceptsReturn="True"
-                             TextWrapping="Wrap"
-                             VerticalScrollBarVisibility="Auto"
-                             HorizontalScrollBarVisibility="Auto"
-                             FontFamily="Consolas"
-                             Margin="5"/>
-
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
-                        <TextBlock Text="{Binding CurrentFilePath}" VerticalAlignment="Center" Margin="5"/>
-                        <TextBlock Text="*" Visibility="{Binding IsModified, Converter={StaticResource BoolToVisibilityConverter}}" 
-                                   VerticalAlignment="Center" FontWeight="Bold"/>
-                    </StackPanel>
-                </Grid>
-            </GroupBox>
         </Grid>
+
+        <!-- 상태 표시줄 -->
+        <StatusBar Grid.Row="2" Background="#F0F0F0">
+            <TextBlock Text="{Binding StatusMessage}" />
+        </StatusBar>
     </Grid>
 </UserControl>

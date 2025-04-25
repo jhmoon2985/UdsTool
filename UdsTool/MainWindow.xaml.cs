@@ -22,15 +22,4 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = viewModel;
     }
-
-    private void MenuItem_Exit_Click(object sender, RoutedEventArgs e)
-    {
-        Close();
-    }
-
-    private void MenuItem_About_Click(object sender, RoutedEventArgs e)
-    {
-        MessageBox.Show("UDS Diagnostic Tool\nA tool for working with Unified Diagnostic Services (UDS) protocols.",
-            "About UDS Diagnostic Tool", MessageBoxButton.OK, MessageBoxImage.Information);
-    }
 }

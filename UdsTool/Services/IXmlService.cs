@@ -9,9 +9,8 @@ namespace UdsTool.Services
 {
     public interface IXmlService
     {
-        Task<UdsConfiguration> LoadConfigurationAsync(string filePath);
-        Task SaveConfigurationAsync(UdsConfiguration configuration, string filePath);
-        string SerializeToString(UdsConfiguration configuration);
-        UdsConfiguration DeserializeFromString(string xmlContent);
+        Task<UdsXmlConfig> LoadConfigurationAsync(string filePath);
+        Task SaveConfigurationAsync(UdsXmlConfig configuration, string filePath);
+        UdsXmlConfig CreateDefaultConfiguration();
     }
 }

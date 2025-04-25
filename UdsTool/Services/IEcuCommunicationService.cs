@@ -9,10 +9,13 @@ namespace UdsTool.Services
 {
     public interface IEcuCommunicationService
     {
-        Task<bool> ConnectAsync(ConnectionSettings settings);
-        Task<bool> DisconnectAsync();
-        Task<UdsResponse> SendCommandAsync(UdsCommand command, CancellationToken cancellationToken = default);
+        event EventHandler<IsoTpFrame> FrameReceived;
         bool IsConnected { get; }
-        event EventHandler<UdsResponse> ResponseReceived;
+        IsoTpConfig CurrentConfig { get; set; }
+
+        Task<bool> ConnectAsync(string portName);
+        Task DisconnectAsync();
+        Task<byte[]> SendRequestAsync(byte[] data);
+        Task SendRawFrameAsync(byte[] data, uint canId);
     }
 }
