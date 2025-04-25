@@ -1,0 +1,21 @@
+﻿<Application x:Class="UdsTool.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:UdsTool"
+             xmlns:converters="clr-namespace:UdsTool.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Value Converters -->
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:BoolToResponseTypeConverter x:Key="BoolToResponseTypeConverter" />
+            <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatusConverter" />
+            <converters:NotNullConverter x:Key="NotNullConverter" />
+
+            <!-- Common Button Style -->
+            <Style TargetType="Button">
+                <Setter Property="Padding" Value="10,5" />
+                <Setter Property="Margin" Value="3" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

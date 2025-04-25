@@ -1,0 +1,138 @@
+﻿<UserControl x:Class="UdsTool.Views.XmlEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:UdsTool.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <ToolBarTray Grid.Row="0">
+            <ToolBar>
+                <Button Command="{Binding NewConfigurationCommand}" ToolTip="New Configuration">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="New" Margin="3,0"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding OpenConfigurationCommand}" ToolTip="Open Configuration">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Open" Margin="3,0"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding SaveConfigurationCommand}" ToolTip="Save Configuration">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Save" Margin="3,0"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding SaveAsConfigurationCommand}" ToolTip="Save As">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Save As" Margin="3,0"/>
+                    </StackPanel>
+                </Button>
+                <Separator/>
+                <Button Command="{Binding UpdateFromXmlCommand}" ToolTip="Update from XML">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Update from XML" Margin="3,0"/>
+                    </StackPanel>
+                </Button>
+            </ToolBar>
+        </ToolBarTray>
+
+        <!-- Main content area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left panel - Command list and properties -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Command List -->
+                <GroupBox Header="UDS Commands" Grid.Row="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <ListBox Grid.Row="0" 
+                                 ItemsSource="{Binding Commands}" 
+                                 SelectedItem="{Binding SelectedCommand}"
+                                 DisplayMemberPath="Name"
+                                 Margin="5"/>
+
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
+                            <Button Content="Add" Command="{Binding AddCommandCommand}" Width="75" Margin="5"/>
+                            <Button Content="Remove" Command="{Binding RemoveCommandCommand}" Width="75" Margin="5"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="#DDDDDD"/>
+
+                <!-- Command Properties -->
+                <GroupBox Header="Command Properties" Grid.Row="2">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="5" IsEnabled="{Binding SelectedCommand, Converter={StaticResource NotNullConverter}}">
+                            <TextBlock Text="Name:" Margin="0,5,0,0"/>
+                            <TextBox Text="{Binding SelectedCommand.Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
+
+                            <TextBlock Text="Service ID (SID) Hex:" Margin="0,5,0,0"/>
+                            <TextBox Text="{Binding SelectedCommand.ServiceId, StringFormat=X2, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
+
+                            <TextBlock Text="Subfunction Hex (Optional):" Margin="0,5,0,0"/>
+                            <TextBox Text="{Binding SelectedCommand.Subfunction, StringFormat=X2, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
+
+                            <TextBlock Text="DID Hex (Optional):" Margin="0,5,0,0"/>
+                            <TextBox Text="{Binding SelectedCommand.Did, StringFormat=X4, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5"/>
+
+                            <TextBlock Text="Data (Hex bytes, space separated):" Margin="0,5,0,0"/>
+                            <TextBox Text="{Binding SelectedCommand.Data, UpdateSourceTrigger=PropertyChanged}" 
+                                     AcceptsReturn="True" TextWrapping="Wrap" Height="80" Margin="0,0,0,5"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </GroupBox>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#DDDDDD"/>
+
+            <!-- Right panel - XML Editor -->
+            <GroupBox Header="XML Content" Grid.Column="2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBox Grid.Row="0"
+                             Text="{Binding XmlContent, UpdateSourceTrigger=PropertyChanged}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             FontFamily="Consolas"
+                             Margin="5"/>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+                        <TextBlock Text="{Binding CurrentFilePath}" VerticalAlignment="Center" Margin="5"/>
+                        <TextBlock Text="*" Visibility="{Binding IsModified, Converter={StaticResource BoolToVisibilityConverter}}" 
+                                   VerticalAlignment="Center" FontWeight="Bold"/>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
+        </Grid>
+    </Grid>
+</UserControl>
