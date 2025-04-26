@@ -1,152 +1,159 @@
 ﻿<UserControl x:Class="UdsTool.Views.EcuCommunicationView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:UdsTool.Views"
-             xmlns:converters="clr-namespace:UdsTool.Utils.Converters"
-             mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
+             xmlns:behaviors="clr-namespace:UdsTool.Behaviors"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="1000">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="300"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Toolbar -->
-        <ToolBar Grid.Row="0">
-            <ComboBox Width="150" ItemsSource="{Binding Interfaces}" SelectedItem="{Binding SelectedInterface}" IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}}"/>
-            <Button Content="Connect" Command="{Binding ConnectCommand}" Margin="5,0" Padding="5,0"/>
-            <Button Content="Disconnect" Command="{Binding DisconnectCommand}" Margin="5,0" Padding="5,0"/>
-            <Separator/>
-            <Button Content="ISO-TP Config" Command="{Binding ConfigureIsoTpCommand}" Margin="5,0" Padding="5,0"/>
-            <Button Content="Clear Log" Command="{Binding ClearLogCommand}" Margin="5,0" Padding="5,0"/>
-        </ToolBar>
-
-        <!-- Main Content -->
-        <Grid Grid.Row="1">
+        <!-- Left Panel - Communication -->
+        <Grid Grid.Column="0" Margin="10">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="5"/>
-                <RowDefinition Height="2*"/>
+                <RowDefinition Height="200"/>
             </Grid.RowDefinitions>
 
-            <!-- Request/Response -->
-            <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="5"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <!-- Connection Controls -->
+            <GroupBox Header="Connection" Grid.Row="0" Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal" Margin="5">
+                    <Button Content="Connect" Command="{Binding ConnectCommand}" 
+                            Width="80" Margin="5"/>
+                    <Button Content="Disconnect" Command="{Binding DisconnectCommand}" 
+                            Width="80" Margin="5"/>
+                    <TextBlock Text="Status:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                    <TextBlock Text="{Binding IsConnected, Converter={StaticResource BoolToConnectionStatusConverter}}" 
+                               VerticalAlignment="Center" FontWeight="Bold"/>
+                </StackPanel>
+            </GroupBox>
 
-                <!-- Request Panel -->
-                <Grid Grid.Column="0">
+            <!-- Frame Selection -->
+            <GroupBox Header="Diagnostic Frames" Grid.Row="1" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ComboBox ItemsSource="{Binding DiagnosticFrames}"
+                              SelectedItem="{Binding SelectedFrame}"
+                              DisplayMemberPath="Name"
+                              Margin="5"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="Send" Command="{Binding SendRequestCommand}" 
+                                Width="60" Margin="5"/>
+                        <Button Content="Load Frames" Command="{Binding LoadFramesCommand}" 
+                                Width="90" Margin="5"/>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
+
+            <!-- Frame Details -->
+            <GroupBox Header="Frame Details" Grid.Row="2" Margin="0,0,0,10">
+                <Grid Margin="5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Name:" Grid.Row="0" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding SelectedFrame.Name, Mode=OneWay}" 
+                             Grid.Row="0" Grid.Column="1" Margin="5" IsReadOnly="True"/>
+
+                    <TextBlock Text="Service ID:" Grid.Row="1" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding SelectedFrame.ServiceId, Mode=OneWay, StringFormat={}0x{0:X2}}" 
+                             Grid.Row="1" Grid.Column="1" Margin="5" IsReadOnly="True"/>
+
+                    <TextBlock Text="SubFunction:" Grid.Row="2" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding SelectedFrame.SubFunction, Mode=OneWay, StringFormat={}0x{0:X2}}" 
+                             Grid.Row="2" Grid.Column="1" Margin="5" IsReadOnly="True"/>
+
+                    <TextBlock Text="DID:" Grid.Row="3" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding SelectedFrame.DataIdentifier, Mode=OneWay, StringFormat={}0x{0:X4}}" 
+                             Grid.Row="3" Grid.Column="1" Margin="5" IsReadOnly="True"/>
+
+                    <TextBlock Text="Data:" Grid.Row="4" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding SelectedFrame.Data, Converter={StaticResource ByteArrayToHexStringConverter}}" 
+                             Grid.Row="4" Grid.Column="1" Margin="5" IsReadOnly="True"/>
+                </Grid>
+            </GroupBox>
+
+            <!-- Communication Log -->
+            <GroupBox Header="Communication Log" Grid.Row="3">
+                <Grid>
+                    <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Request (hex):" Margin="5,5,5,0" FontWeight="Bold"/>
-                    <TextBox Grid.Row="1" Text="{Binding RequestHex, UpdateSourceTrigger=PropertyChanged}" 
-                             AcceptsReturn="True" TextWrapping="Wrap" Margin="5" VerticalScrollBarVisibility="Auto"/>
-                    <Button Grid.Row="2" Content="Send Request" Command="{Binding SendRequestCommand}" 
-                            HorizontalAlignment="Right" Margin="5"/>
+                    <TextBox Text="{Binding CommunicationLog, Mode=OneWay}"
+                             IsReadOnly="True"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             FontFamily="Consolas"
+                             Margin="5"/>
+
+                    <Button Content="Clear Log" Command="{Binding ClearLogCommand}" 
+                            Grid.Row="1" Width="80" HorizontalAlignment="Right" Margin="5"/>
                 </Grid>
+            </GroupBox>
+        </Grid>
 
-                <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <!-- Right Panel - ISO-TP Settings -->
+        <Grid Grid.Column="1" Margin="10">
+            <GroupBox Header="ISO-TP Settings">
+                <StackPanel Margin="5">
+                    <TextBlock Text="Request CAN ID:" Margin="0,5,0,0"/>
+                    <TextBox Text="{Binding IsoTpSettings.RequestCanId, StringFormat={}0x{0:X3}}" Margin="0,0,0,10">
+                        <i:Interaction.Behaviors>
+                            <behaviors:TextBoxBehavior AcceptHexInput="True"/>
+                        </i:Interaction.Behaviors>
+                    </TextBox>
 
-                <!-- Response Panel -->
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                    <TextBlock Text="Response CAN ID:" Margin="0,5,0,0"/>
+                    <TextBox Text="{Binding IsoTpSettings.ResponseCanId, StringFormat={}0x{0:X3}}" Margin="0,0,0,10">
+                        <i:Interaction.Behaviors>
+                            <behaviors:TextBoxBehavior AcceptHexInput="True"/>
+                        </i:Interaction.Behaviors>
+                    </TextBox>
 
-                    <TextBlock Grid.Row="0" Text="Response (hex):" Margin="5,5,5,0" FontWeight="Bold"/>
-                    <TextBox Grid.Row="1" Text="{Binding ResponseHex, Mode=TwoWay}" IsReadOnly="True" 
-                             TextWrapping="Wrap" Margin="5" VerticalScrollBarVisibility="Auto" Background="#F8F8F8"/>
-                </Grid>
-            </Grid>
+                    <TextBlock Text="Flow Control CAN ID:" Margin="0,5,0,0"/>
+                    <TextBox Text="{Binding IsoTpSettings.FlowControlCanId, StringFormat={}0x{0:X3}}" Margin="0,0,0,10">
+                        <i:Interaction.Behaviors>
+                            <behaviors:TextBoxBehavior AcceptHexInput="True"/>
+                        </i:Interaction.Behaviors>
+                    </TextBox>
 
-            <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    <TextBlock Text="Block Size:" Margin="0,5,0,0"/>
+                    <TextBox Text="{Binding IsoTpSettings.BlockSize}" Margin="0,0,0,10"/>
 
-            <!-- Log Panel -->
-            <Grid Grid.Row="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+                    <TextBlock Text="Separation Time (ms):" Margin="0,5,0,0"/>
+                    <TextBox Text="{Binding IsoTpSettings.SeparationTime}" Margin="0,0,0,10"/>
 
-                <TextBlock Grid.Row="0" Text="Message Log:" Margin="5,5,5,0" FontWeight="Bold"/>
-                <ListBox Grid.Row="1" ItemsSource="{Binding MessageLog}" Margin="5" FontFamily="Consolas" FontSize="12"/>
-            </Grid>
-
-            <!-- ISO-TP Configuration Overlay -->
-            <Border Grid.Row="0" Grid.RowSpan="3" Background="#E0FFFFFF" 
-                    Visibility="{Binding ShowIsoTpConfig, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Border BorderBrush="LightGray" BorderThickness="1" Background="White" 
-                        Width="500" Height="400" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <Grid Margin="10">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Grid.Row="0" Text="ISO-TP Configuration" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
-
-                        <ScrollViewer Grid.Row="1">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Request CAN ID (hex):" VerticalAlignment="Center" Margin="0,5"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding IsoTpConfig.RequestCanId, StringFormat=X3}" Margin="5"/>
-
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Response CAN ID (hex):" VerticalAlignment="Center" Margin="0,5"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding IsoTpConfig.ResponseCanId, StringFormat=X3}" Margin="5"/>
-
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Block Size:" VerticalAlignment="Center" Margin="0,5"/>
-                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding IsoTpConfig.BlockSize}" Margin="5"/>
-
-                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Separation Time (ms):" VerticalAlignment="Center" Margin="0,5"/>
-                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding IsoTpConfig.SeparationTime}" Margin="5"/>
-
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Timeout (ms):" VerticalAlignment="Center" Margin="0,5"/>
-                                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding IsoTpConfig.Timeout}" Margin="5"/>
-
-                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Padding Enabled:" VerticalAlignment="Center" Margin="0,5"/>
-                                <CheckBox Grid.Row="5" Grid.Column="1" IsChecked="{Binding IsoTpConfig.PaddingEnabled}" VerticalAlignment="Center" Margin="5"/>
-
-                                <TextBlock Grid.Row="6" Grid.Column="0" Text="Extended Addressing:" VerticalAlignment="Center" Margin="0,5"/>
-                                <CheckBox Grid.Row="6" Grid.Column="1" IsChecked="{Binding IsoTpConfig.ExtendedAddressing}" VerticalAlignment="Center" Margin="5"/>
-
-                                <TextBlock Grid.Row="7" Grid.Column="0" Text="Use CAN FD:" VerticalAlignment="Center" Margin="0,5"/>
-                                <CheckBox Grid.Row="7" Grid.Column="1" IsChecked="{Binding IsoTpConfig.UseCanFd}" VerticalAlignment="Center" Margin="5"/>
-                            </Grid>
-                        </ScrollViewer>
-
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                            <Button Content="Load" Command="{Binding LoadIsoTpConfigCommand}" Margin="5" Padding="10,3"/>
-                            <Button Content="Save" Command="{Binding SaveIsoTpConfigCommand}" Margin="5" Padding="10,3"/>
-                            <Button Content="Close" Command="{Binding ConfigureIsoTpCommand}" Margin="5" Padding="10,3"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </Border>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                        <Button Content="Save Settings" Command="{Binding SaveSettingsCommand}" 
+                                Width="100" Margin="5"/>
+                        <Button Content="Load Settings" Command="{Binding LoadSettingsCommand}" 
+                                Width="100" Margin="5"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
         </Grid>
     </Grid>
 </UserControl>

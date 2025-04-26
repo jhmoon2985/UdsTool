@@ -1,50 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UdsTool.Core.Interfaces;
+﻿using System.Windows;
+using UdsTool.Services;
+using UdsTool.ViewModels;
+using UdsTool.Views;
 
-namespace UdsTool.Services
+public class DialogService : IDialogService
 {
-    public class DialogService : IDialogService
+    public bool? ShowDialog(object viewModel)
     {
-        public bool ShowOpenFileDialog(string title, string filter, out string selectedFilePath)
+        Window dialog = null;
+
+        if (viewModel is FrameEditDialogViewModel frameEditViewModel)
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog
+            dialog = new FrameEditDialog();
+            frameEditViewModel.SetWindow(dialog as ICloseable);
+        }
+
+        if (dialog != null)
+        {
+            dialog.DataContext = viewModel;
+
+            // 현재 활성화된 윈도우를 owner로 설정
+            if (Application.Current != null)
             {
-                Title = title,
-                Filter = filter
-            };
+                foreach (Window window in Application.Current.Windows)
+                {
+                    if (window.IsActive)
+                    {
+                        dialog.Owner = window;
+                        break;
+                    }
+                }
+            }
 
-            var result = dialog.ShowDialog() == true;
-            selectedFilePath = result ? dialog.FileName : string.Empty;
-            return result;
+            return dialog.ShowDialog();
         }
 
-        public bool ShowSaveFileDialog(string title, string filter, out string selectedFilePath)
-        {
-            var dialog = new Microsoft.Win32.SaveFileDialog
-            {
-                Title = title,
-                Filter = filter
-            };
-
-            var result = dialog.ShowDialog() == true;
-            selectedFilePath = result ? dialog.FileName : string.Empty;
-            return result;
-        }
-
-        public void ShowMessage(string message, string title = "Information")
-        {
-            System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.OK);
-        }
-
-        public bool ShowConfirmation(string message, string title = "Confirmation")
-        {
-            return System.Windows.MessageBox.Show(message, title,
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes;
-        }
+        return false;
     }
 }

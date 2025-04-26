@@ -1,327 +1,151 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using UdsTool.Core.Base;
-using UdsTool.Core.Interfaces;
-using UdsTool.Core.Models;
+using UdsTool.Commands;
+using UdsTool.Models;
+using UdsTool.Services;
+using Microsoft.Win32;
+using UdsTool.Views;
 
 namespace UdsTool.ViewModels
 {
-    public class XmlEditorViewModel : ViewModelBase
+    public class XmlEditorViewModel : INotifyPropertyChanged
     {
         private readonly IXmlService _xmlService;
-        private UdsDatabase _database;
-        private UdsElement _selectedElement;
-        private string _currentFilePath;
-        private bool _isModified;
+        private readonly IDialogService _dialogService;
+        private DiagnosticFrame _selectedFrame;
+        private string _xmlContent;
 
-        public UdsDatabase Database
+        public XmlEditorViewModel(IXmlService xmlService, IDialogService dialogService)
         {
-            get => _database;
-            private set => SetProperty(ref _database, value);
+            _xmlService = xmlService;
+            _dialogService = dialogService;
+            DiagnosticFrames = new ObservableCollection<DiagnosticFrame>();
+
+            AddFrameCommand = new RelayCommand(_ => AddFrame());
+            EditFrameCommand = new RelayCommand(_ => EditFrame(), _ => SelectedFrame != null);
+            DeleteFrameCommand = new RelayCommand(_ => DeleteFrame(), _ => SelectedFrame != null);
+            SaveCommand = new RelayCommand(_ => Save());
+            LoadCommand = new RelayCommand(_ => Load());
+
+            UpdateXmlView();
         }
 
-        public UdsElement SelectedElement
+        public ObservableCollection<DiagnosticFrame> DiagnosticFrames { get; set; }
+
+        public DiagnosticFrame SelectedFrame
         {
-            get => _selectedElement;
-            set => SetProperty(ref _selectedElement, value);
-        }
-
-        public bool IsModified
-        {
-            get => _isModified;
-            set => SetProperty(ref _isModified, value);
-        }
-
-        public ICommand NewDatabaseCommand { get; }
-        public ICommand LoadDatabaseCommand { get; }
-        public ICommand SaveDatabaseCommand { get; }
-        public ICommand SaveAsDatabaseCommand { get; }
-        public ICommand AddServiceCommand { get; }
-        public ICommand AddSubfunctionCommand { get; }
-        public ICommand AddDataIdCommand { get; }
-        public ICommand AddDataCommand { get; }
-        public ICommand DeleteElementCommand { get; }
-
-        public XmlEditorViewModel(IXmlService xmlService)
-        {
-            _xmlService = xmlService ?? throw new ArgumentNullException(nameof(xmlService));
-
-            // Initialize commands
-            NewDatabaseCommand = new RelayCommand(_ => NewDatabase());
-            LoadDatabaseCommand = new RelayCommand(_ => LoadDatabaseAsync());
-            SaveDatabaseCommand = new RelayCommand(_ => SaveDatabaseAsync(), _ => IsModified);
-            SaveAsDatabaseCommand = new RelayCommand(_ => SaveDatabaseAsAsync());
-            AddServiceCommand = new RelayCommand(_ => AddService());
-            AddSubfunctionCommand = new RelayCommand(_ => AddSubfunction(), CanAddSubfunction);
-            AddDataIdCommand = new RelayCommand(_ => AddDataId(), CanAddDataId);
-            AddDataCommand = new RelayCommand(_ => AddData(), CanAddData);
-            DeleteElementCommand = new RelayCommand(_ => DeleteElement(), _ => SelectedElement != null);
-
-            // Initialize with a new database
-            NewDatabase();
-        }
-
-        private void NewDatabase()
-        {
-            Database = _xmlService.CreateDefaultDatabase();
-            _currentFilePath = null;
-            IsModified = false;
-            SelectedElement = null;
-        }
-
-        private async void LoadDatabaseAsync()
-        {
-            try
+            get => _selectedFrame;
+            set
             {
-                var openFileDialog = new OpenFileDialog
+                _selectedFrame = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string XmlContent
+        {
+            get => _xmlContent;
+            set
+            {
+                _xmlContent = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand AddFrameCommand { get; }
+        public ICommand EditFrameCommand { get; }
+        public ICommand DeleteFrameCommand { get; }
+        public ICommand SaveCommand { get; }
+        public ICommand LoadCommand { get; }
+
+        private void AddFrame()
+        {
+            var dialogViewModel = new FrameEditDialogViewModel();
+
+            if (_dialogService.ShowDialog(dialogViewModel) == true)
+            {
+                var newFrame = dialogViewModel.GetFrame();
+                DiagnosticFrames.Add(newFrame);
+                SelectedFrame = newFrame;
+                UpdateXmlView();
+            }
+        }
+
+        private void EditFrame()
+        {
+            if (SelectedFrame != null)
+            {
+                var dialogViewModel = new FrameEditDialogViewModel(SelectedFrame);
+
+                if (_dialogService.ShowDialog(dialogViewModel) == true)
                 {
-                    Filter = "XML Files (*.xml)|*.xml|All Files (*.*)|*.*",
-                    Title = "Open UDS Database"
-                };
+                    int index = DiagnosticFrames.IndexOf(SelectedFrame);
+                    if (index >= 0)
+                    {
+                        var updatedFrame = dialogViewModel.GetFrame();
+                        DiagnosticFrames[index] = updatedFrame;
+                        SelectedFrame = updatedFrame;
+                    }
 
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    IsBusy = true;
-                    StatusMessage = "Loading database...";
-
-                    var database = await _xmlService.LoadDatabaseAsync(openFileDialog.FileName);
-                    Database = database;
-                    _currentFilePath = openFileDialog.FileName;
-                    IsModified = false;
-                    SelectedElement = null;
-
-                    StatusMessage = "Database loaded successfully.";
+                    UpdateXmlView();
                 }
             }
-            catch (Exception ex)
+        }
+
+        private void DeleteFrame()
+        {
+            if (SelectedFrame != null)
             {
-                StatusMessage = $"Error: {ex.Message}";
-            }
-            finally
-            {
-                IsBusy = false;
+                DiagnosticFrames.Remove(SelectedFrame);
+                UpdateXmlView();
             }
         }
 
-        private async Task SaveDatabaseAsync()
+        private void Save()
         {
-            try
+            var saveFileDialog = new SaveFileDialog
             {
-                if (string.IsNullOrEmpty(_currentFilePath))
-                {
-                    await SaveDatabaseAsAsync();
-                    return;
-                }
-
-                IsBusy = true;
-                StatusMessage = "Saving database...";
-
-                await _xmlService.SaveDatabaseAsync(_currentFilePath, Database);
-                IsModified = false;
-
-                StatusMessage = "Database saved successfully.";
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error: {ex.Message}";
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        private async Task SaveDatabaseAsAsync()
-        {
-            try
-            {
-                var saveFileDialog = new SaveFileDialog
-                {
-                    Filter = "XML Files (*.xml)|*.xml|All Files (*.*)|*.*",
-                    Title = "Save UDS Database"
-                };
-
-                if (saveFileDialog.ShowDialog() == true)
-                {
-                    IsBusy = true;
-                    StatusMessage = "Saving database...";
-
-                    await _xmlService.SaveDatabaseAsync(saveFileDialog.FileName, Database);
-                    _currentFilePath = saveFileDialog.FileName;
-                    IsModified = false;
-
-                    StatusMessage = "Database saved successfully.";
-                }
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error: {ex.Message}";
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        private void AddService()
-        {
-            var serviceId = new ServiceId
-            {
-                Name = "NewService",
-                Description = "New Service Description",
-                Value = 0x00
+                Filter = "XML files (*.xml)|*.xml|All files (*.*)|*.*",
+                DefaultExt = "xml"
             };
 
-            Database.ServiceIds.Add(serviceId);
-            SelectedElement = serviceId;
-            IsModified = true;
-        }
-
-        private void AddSubfunction()
-        {
-            if (SelectedElement is ServiceId serviceId)
+            if (saveFileDialog.ShowDialog() == true)
             {
-                var subfunction = new Subfunction
-                {
-                    Name = "NewSubfunction",
-                    Description = "New Subfunction Description",
-                    Value = 0x00
-                };
-
-                serviceId.Subfunctions.Add(subfunction);
-                SelectedElement = subfunction;
-                IsModified = true;
+                _xmlService.SaveToFile(saveFileDialog.FileName, DiagnosticFrames);
             }
         }
 
-        private bool CanAddSubfunction(object parameter)
+        private void Load()
         {
-            return SelectedElement is ServiceId;
-        }
-
-        private void AddDataId()
-        {
-            if (SelectedElement is ServiceId serviceId)
+            var openFileDialog = new OpenFileDialog
             {
-                var dataId = new DataId
+                Filter = "XML files (*.xml)|*.xml|All files (*.*)|*.*",
+                DefaultExt = "xml"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                var loadedFrames = _xmlService.LoadFromFile(openFileDialog.FileName);
+                DiagnosticFrames.Clear();
+                foreach (var frame in loadedFrames)
                 {
-                    Name = "NewDataId",
-                    Description = "New Data ID Description",
-                    Value = 0x00
-                };
-
-                serviceId.DataIds.Add(dataId);
-                SelectedElement = dataId;
-                IsModified = true;
-            }
-        }
-
-        private bool CanAddDataId(object parameter)
-        {
-            return SelectedElement is ServiceId;
-        }
-
-        private void AddData()
-        {
-            if (SelectedElement is Subfunction subfunction)
-            {
-                var data = new UdsData
-                {
-                    Name = "NewData",
-                    Value = "00 00 00"
-                };
-
-                subfunction.Data.Add(data);
-                IsModified = true;
-            }
-            else if (SelectedElement is DataId dataId)
-            {
-                var data = new UdsData
-                {
-                    Name = "NewData",
-                    Value = "00 00 00"
-                };
-
-                dataId.Data.Add(data);
-                IsModified = true;
-            }
-        }
-
-        private bool CanAddData(object parameter)
-        {
-            return SelectedElement is Subfunction || SelectedElement is DataId;
-        }
-
-        private void DeleteElement()
-        {
-            if (SelectedElement == null)
-                return;
-
-            if (SelectedElement is ServiceId serviceId)
-            {
-                Database.ServiceIds.Remove(serviceId);
-                SelectedElement = null;
-                IsModified = true;
-            }
-            else if (SelectedElement is Subfunction subfunction)
-            {
-                // Find parent service
-                foreach (var service in Database.ServiceIds)
-                {
-                    if (service.Subfunctions.Contains(subfunction))
-                    {
-                        service.Subfunctions.Remove(subfunction);
-                        SelectedElement = service;
-                        IsModified = true;
-                        break;
-                    }
+                    DiagnosticFrames.Add(frame);
                 }
+                UpdateXmlView();
             }
-            else if (SelectedElement is DataId dataId)
-            {
-                // Find parent service
-                foreach (var service in Database.ServiceIds)
-                {
-                    if (service.DataIds.Contains(dataId))
-                    {
-                        service.DataIds.Remove(dataId);
-                        SelectedElement = service;
-                        IsModified = true;
-                        break;
-                    }
-                }
-            }
-            else if (SelectedElement is UdsData data)
-            {
-                // Find parent subfunction or DID
-                foreach (var service in Database.ServiceIds)
-                {
-                    foreach (var subfunction in service.Subfunctions)
-                    {
-                        if (subfunction.Data.Contains(data))
-                        {
-                            subfunction.Data.Remove(data);
-                            SelectedElement = subfunction;
-                            IsModified = true;
-                            return;
-                        }
-                    }
+        }
 
-                    foreach (var did in service.DataIds)
-                    {
-                        if (did.Data.Contains(data))
-                        {
-                            did.Data.Remove(data);
-                            SelectedElement = did;
-                            IsModified = true;
-                            return;
-                        }
-                    }
-                }
-            }
+        private void UpdateXmlView()
+        {
+            XmlContent = _xmlService.SerializeToXml(DiagnosticFrames);
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

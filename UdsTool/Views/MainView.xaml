@@ -4,59 +4,35 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:UdsTool.Views"
-        xmlns:vm="clr-namespace:UdsTool.ViewModels"
-        xmlns:converters="clr-namespace:UdsTool.Utils.Converters"
+        xmlns:viewModels="clr-namespace:UdsTool.ViewModels"
         mc:Ignorable="d"
-        Title="{Binding Title}" Height="700" Width="1200">
+        Title="UDS Tool" Height="800" Width="1200">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        
+        <!-- Navigation Menu -->
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Background="#F0F0F0" Margin="5">
+            <Button Content="XML Editor" 
+                    Command="{Binding NavigateToXmlEditorCommand}" 
+                    Margin="5" Padding="10,5"/>
+            <Button Content="ECU Communication" 
+                    Command="{Binding NavigateToEcuCommunicationCommand}" 
+                    Margin="5" Padding="10,5"/>
+        </StackPanel>
 
-        <!-- Menu -->
-        <Menu Grid.Row="0">
-            <MenuItem Header="File">
-                <MenuItem Header="Exit" Command="{Binding ExitCommand}"/>
-            </MenuItem>
-            <MenuItem Header="View">
-                <MenuItem Header="XML Editor" Command="{Binding NavigateToXmlEditorCommand}"/>
-                <MenuItem Header="ECU Communication" Command="{Binding NavigateToEcuCommunicationCommand}"/>
-            </MenuItem>
-            <MenuItem Header="Help">
-                <MenuItem Header="About"/>
-            </MenuItem>
-        </Menu>
-
-        <!-- Main Content -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Navigation Panel -->
-            <Border Grid.Column="0" Width="200" BorderBrush="#DDD" BorderThickness="0,0,1,0" Background="#F8F8F8">
-                <StackPanel Margin="5">
-                    <TextBlock Text="Navigation" FontWeight="Bold" Margin="5"/>
-                    <Button Content="XML Editor" Command="{Binding NavigateToXmlEditorCommand}" Margin="5" Padding="5"/>
-                    <Button Content="ECU Communication" Command="{Binding NavigateToEcuCommunicationCommand}" Margin="5" Padding="5"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Content Area -->
-            <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}"/>
-        </Grid>
-
-        <!-- Status Bar -->
-        <StatusBar Grid.Row="2">
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusMessage}"/>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <ProgressBar Width="100" Height="10" IsIndeterminate="{Binding IsBusy}" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            </StatusBarItem>
-        </StatusBar>
+        <!-- Content Area -->
+        <ContentControl Grid.Row="1" Content="{Binding CurrentView}">
+            <ContentControl.Resources>
+                <DataTemplate DataType="{x:Type viewModels:XmlEditorViewModel}">
+                    <local:XmlEditorView/>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type viewModels:EcuCommunicationViewModel}">
+                    <local:EcuCommunicationView/>
+                </DataTemplate>
+            </ContentControl.Resources>
+        </ContentControl>
     </Grid>
 </Window>

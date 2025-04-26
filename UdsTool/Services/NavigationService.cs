@@ -1,52 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using UdsTool.Core.Base;
-using UdsTool.Core.Interfaces;
 using UdsTool.ViewModels;
 
 namespace UdsTool.Services
 {
     public class NavigationService : INavigationService
     {
-        private readonly Dictionary<Type, ViewModelBase> _viewModels;
-        private ViewModelBase _currentViewModel;
+        private readonly Dictionary<string, Func<object>> _viewModelFactory;
+        private object _currentView;
 
-        public ViewModelBase CurrentViewModel
+        public NavigationService(Dictionary<string, Func<object>> viewModelFactory)
         {
-            get => _currentViewModel;
+            _viewModelFactory = viewModelFactory;
+        }
+
+        public object CurrentView
+        {
+            get => _currentView;
             private set
             {
-                _currentViewModel = value;
-                CurrentViewModelChanged?.Invoke(this, EventArgs.Empty);
+                _currentView = value;
+                ViewChanged?.Invoke(this, value);
             }
         }
 
-        public event EventHandler CurrentViewModelChanged;
+        public event EventHandler<object> ViewChanged;
 
-        public NavigationService()
+        public void NavigateTo(string viewName)
         {
-            _viewModels = new Dictionary<Type, ViewModelBase>();
-        }
-
-        public void NavigateTo<T>() where T : ViewModelBase
-        {
-            var type = typeof(T);
-            if (_viewModels.ContainsKey(type))
+            if (_viewModelFactory.TryGetValue(viewName, out var factory))
             {
-                CurrentViewModel = _viewModels[type];
-            }
-            else
-            {
-                throw new InvalidOperationException($"ViewModel of type {type.Name} is not registered.");
-            }
-        }
-
-        public void RegisterViewModel<T>(T viewModel) where T : ViewModelBase
-        {
-            var type = typeof(T);
-            if (!_viewModels.ContainsKey(type))
-            {
-                _viewModels[type] = viewModel;
+                CurrentView = factory();
             }
         }
     }

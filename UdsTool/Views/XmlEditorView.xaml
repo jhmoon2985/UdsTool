@@ -1,204 +1,78 @@
 ﻿<UserControl x:Class="UdsTool.Views.XmlEditorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:UdsTool.Views"
              xmlns:behaviors="clr-namespace:UdsTool.Behaviors"
-             xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
-             xmlns:converters="clr-namespace:UdsTool.Utils.Converters"
-             mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="1000">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Toolbar -->
-        <ToolBar Grid.Row="0">
-            <Button Content="New" Command="{Binding NewDatabaseCommand}" ToolTip="Create new database"/>
-            <Button Content="Open" Command="{Binding LoadDatabaseCommand}" ToolTip="Load database from file"/>
-            <Button Content="Save" Command="{Binding SaveDatabaseCommand}" ToolTip="Save database"/>
-            <Button Content="Save As" Command="{Binding SaveAsDatabaseCommand}" ToolTip="Save database as"/>
-            <Separator/>
-            <Button Content="Add Service" Command="{Binding AddServiceCommand}" ToolTip="Add new service"/>
-            <Button Content="Add Subfunction" Command="{Binding AddSubfunctionCommand}" ToolTip="Add new subfunction"/>
-            <Button Content="Add Data ID" Command="{Binding AddDataIdCommand}" ToolTip="Add new Data ID"/>
-            <Button Content="Add Data" Command="{Binding AddDataCommand}" ToolTip="Add new data"/>
-            <Button Content="Delete" Command="{Binding DeleteElementCommand}" ToolTip="Delete selected item"/>
-        </ToolBar>
+        <!-- Left Panel - TreeView -->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- Main Content -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="350"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <TextBlock Text="Diagnostic Frames" 
+                       FontWeight="Bold" 
+                       Margin="5"/>
 
-            <!-- TreeView with UDS Elements -->
-            <TreeView Grid.Column="0" Margin="5" ItemsSource="{Binding Database.ServiceIds}">
-                <b:Interaction.Behaviors>
-                    <behaviors:TreeViewSelectedItemBehavior SelectedItem="{Binding SelectedElement, Mode=TwoWay}"/>
-                </b:Interaction.Behaviors>
-
-                <TreeView.Resources>
-                    <!-- Style for TreeViewItem -->
-                    <Style TargetType="TreeViewItem">
-                        <Setter Property="IsExpanded" Value="False"/>
-                        <b:Interaction.Behaviors>
-                            <behaviors:TreeViewItemBehavior SelectedItemChangedCommand="{Binding DataContext.SelectItemCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                        </b:Interaction.Behaviors>
-                    </Style>
-                </TreeView.Resources>
-
+            <TreeView Grid.Row="1" 
+                      ItemsSource="{Binding DiagnosticFrames}"
+                      Margin="5">
+                <i:Interaction.Behaviors>
+                    <behaviors:TreeViewBehavior SelectedItem="{Binding SelectedFrame, Mode=TwoWay}"/>
+                </i:Interaction.Behaviors>
                 <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate ItemsSource="{Binding Subfunctions}">
+                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
-                            <TextBlock Text=" - "/>
-                            <TextBlock Text="{Binding HexValue}"/>
+                            <TextBlock Text="{Binding Name}" Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding ServiceId, StringFormat={}SID: 0x{0:X2}}" Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding Type}" FontStyle="Italic"/>
                         </StackPanel>
-
-                        <HierarchicalDataTemplate.ItemTemplate>
-                            <HierarchicalDataTemplate ItemsSource="{Binding Data}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Name}"/>
-                                    <TextBlock Text=" - "/>
-                                    <TextBlock Text="{Binding HexValue}"/>
-                                </StackPanel>
-
-                                <HierarchicalDataTemplate.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding Name}"/>
-                                            <TextBlock Text=": "/>
-                                            <TextBlock Text="{Binding Value}"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </HierarchicalDataTemplate.ItemTemplate>
-                            </HierarchicalDataTemplate>
-                        </HierarchicalDataTemplate.ItemTemplate>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
             </TreeView>
 
-            <!-- Element Properties -->
-            <Border Grid.Column="1" BorderBrush="LightGray" BorderThickness="1" Margin="5">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="5">
+                <Button Content="Add" Command="{Binding AddFrameCommand}" Margin="5" Padding="10,5"/>
+                <Button Content="Edit" Command="{Binding EditFrameCommand}" Margin="5" Padding="10,5"/>
+                <Button Content="Delete" Command="{Binding DeleteFrameCommand}" Margin="5" Padding="10,5"/>
+                <Button Content="Save" Command="{Binding SaveCommand}" Margin="5" Padding="10,5"/>
+                <Button Content="Load" Command="{Binding LoadCommand}" Margin="5" Padding="10,5"/>
+            </StackPanel>
+        </Grid>
 
-                    <TextBlock Grid.Row="0" Text="Element Properties" FontWeight="Bold" Margin="5"/>
+        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
 
-                    <ScrollViewer Grid.Row="1" Margin="5">
-                        <StackPanel>
-                            <!-- Service ID Properties -->
-                            <StackPanel Visibility="{Binding SelectedElement, Converter={StaticResource TypeToVisibilityConverter}, ConverterParameter='UdsTool.Core.Models.ServiceId'}">
-                                <TextBlock Text="Service ID" FontWeight="Bold" Margin="0,10,0,5"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
+        <!-- Right Panel - XML Editor -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedElement.Name, UpdateSourceTrigger=PropertyChanged}" Margin="5,2"/>
+            <TextBlock Text="XML View" 
+                       FontWeight="Bold" 
+                       Margin="5"/>
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Description:" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedElement.Description, UpdateSourceTrigger=PropertyChanged}" Margin="5,2"/>
-
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Value (hex):" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedElement.Value, UpdateSourceTrigger=PropertyChanged, StringFormat=X2}" Margin="5,2"/>
-                                </Grid>
-                            </StackPanel>
-
-                            <!-- Subfunction Properties -->
-                            <StackPanel Visibility="{Binding SelectedElement, Converter={StaticResource TypeToVisibilityConverter}, ConverterParameter='UdsTool.Core.Models.Subfunction'}">
-                                <TextBlock Text="Subfunction" FontWeight="Bold" Margin="0,10,0,5"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedElement.Name, UpdateSourceTrigger=PropertyChanged}" Margin="5,2"/>
-
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Description:" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedElement.Description, UpdateSourceTrigger=PropertyChanged}" Margin="5,2"/>
-
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Value (hex):" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedElement.Value, UpdateSourceTrigger=PropertyChanged, StringFormat=X2}" Margin="5,2"/>
-                                </Grid>
-                            </StackPanel>
-
-                            <!-- Data ID Properties -->
-                            <StackPanel Visibility="{Binding SelectedElement, Converter={StaticResource TypeToVisibilityConverter}, ConverterParameter='UdsTool.Core.Models.DataId'}">
-                                <TextBlock Text="Data ID" FontWeight="Bold" Margin="0,10,0,5"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedElement.Name, UpdateSourceTrigger=PropertyChanged}" Margin="5,2"/>
-
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Description:" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedElement.Description, UpdateSourceTrigger=PropertyChanged}" Margin="5,2"/>
-
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Value (hex):" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedElement.Value, UpdateSourceTrigger=PropertyChanged, StringFormat=X2}" Margin="5,2"/>
-                                </Grid>
-                            </StackPanel>
-
-                            <!-- Data Properties -->
-                            <StackPanel Visibility="{Binding SelectedElement, Converter={StaticResource TypeToVisibilityConverter}, ConverterParameter='UdsTool.Core.Models.UdsData'}">
-                                <TextBlock Text="Data" FontWeight="Bold" Margin="0,10,0,5"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedElement.Name, UpdateSourceTrigger=PropertyChanged}" Margin="5,2"/>
-
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Value:" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedElement.Value, UpdateSourceTrigger=PropertyChanged}" Margin="5,2"/>
-                                </Grid>
-                            </StackPanel>
-
-                            <!-- No element selected -->
-                            <TextBlock Text="Select an element to edit its properties" 
-                                       Visibility="{Binding SelectedElement, Converter={StaticResource NullToVisibilityConverter}}"
-                                       Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
+            <TextBox Grid.Row="1" 
+                     Text="{Binding XmlContent, UpdateSourceTrigger=PropertyChanged}"
+                     AcceptsReturn="True" 
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     FontFamily="Consolas"
+                     Margin="5"/>
         </Grid>
     </Grid>
 </UserControl>

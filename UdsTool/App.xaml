@@ -2,36 +2,21 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:UdsTool"
-             xmlns:converters="clr-namespace:UdsTool.Utils..Converters">
+             xmlns:converters="clr-namespace:UdsTool.Converters"
+             xmlns:viewModels="clr-namespace:UdsTool.ViewModels"
+             xmlns:views="clr-namespace:UdsTool.Views">
     <Application.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <!-- Add your application resources here -->
-            </ResourceDictionary.MergedDictionaries>
+        <!-- Converters -->
+        <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatusConverter"/>
+        <converters:ByteArrayToHexStringConverter x:Key="ByteArrayToHexStringConverter"/>
 
-            <!-- Global styles and resources -->
-            <Style TargetType="Button">
-                <Setter Property="Padding" Value="10,5"/>
-                <Setter Property="Margin" Value="2"/>
-            </Style>
+        <!-- DataTemplates for ViewModels -->
+        <DataTemplate DataType="{x:Type viewModels:XmlEditorViewModel}">
+            <views:XmlEditorView/>
+        </DataTemplate>
 
-            <Style TargetType="TextBox">
-                <Setter Property="Padding" Value="3"/>
-                <Setter Property="Margin" Value="2"/>
-            </Style>
-
-            <Style TargetType="ComboBox">
-                <Setter Property="Padding" Value="5,3"/>
-                <Setter Property="Margin" Value="2"/>
-            </Style>
-
-            <!-- Converters -->
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
-            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
-            <converters:TypeToVisibilityConverter x:Key="TypeToVisibilityConverter"/>
-            <converters:StringToHexConverter x:Key="StringToHexConverter"/>
-            <converters:ByteArrayToHexStringConverter x:Key="ByteArrayToHexStringConverter"/>
-        </ResourceDictionary>
+        <DataTemplate DataType="{x:Type viewModels:EcuCommunicationViewModel}">
+            <views:EcuCommunicationView/>
+        </DataTemplate>
     </Application.Resources>
 </Application>

@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UdsTool.Utils
+namespace UdsTool.Services
 {
-    internal class EventAggregator
+    public interface ICloseable
     {
+        void Close(bool? dialogResult);
     }
 }

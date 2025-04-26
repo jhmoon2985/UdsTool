@@ -1,24 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace UdsTool.Utils.Converters
+namespace UdsTool.Converters
 {
-    public class NotNullConverter : IValueConverter
+    public class ByteArrayToHexStringConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value != null;
+            if (value is byte[] bytes)
+            {
+                return BitConverter.ToString(bytes).Replace("-", " ");
+            }
+            return string.Empty;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            //throw new NotImplementedException();
-            return null;
+            throw new NotImplementedException();
         }
     }
 }

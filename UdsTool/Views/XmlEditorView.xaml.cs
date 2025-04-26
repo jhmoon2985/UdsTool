@@ -1,26 +1,20 @@
-﻿// Views/XmlEditorView.xaml.cs
-using System.Windows;
-using System.Windows.Controls;
-using UdsTool.Core.Models;
+﻿using System.Windows.Controls;
 using UdsTool.ViewModels;
 
 namespace UdsTool.Views
 {
     public partial class XmlEditorView : UserControl
     {
-        private XmlEditorViewModel ViewModel => DataContext as XmlEditorViewModel;
-
         public XmlEditorView()
         {
             InitializeComponent();
         }
 
-        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        private void TreeView_SelectedItemChanged(object sender, System.Windows.RoutedPropertyChangedEventArgs<object> e)
         {
-            if (e.NewValue is UdsConfiguration message && ViewModel != null)
+            if (DataContext is XmlEditorViewModel viewModel)
             {
-                // TreeView에서 선택한 메시지를 ViewModel에 설정
-                ViewModel.SelectedMessage = message;
+                viewModel.SelectedFrame = e.NewValue as Models.DiagnosticFrame;
             }
         }
     }
