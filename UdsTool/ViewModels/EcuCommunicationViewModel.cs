@@ -1,235 +1,161 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Windows;
-using UdsTool.Models;
-using UdsTool.Services;
-using System.ComponentModel;
-using Microsoft.Win32;
-using System.IO;
-using System.Xml.Serialization;
+using UdsTool.Core.Base;
+using UdsTool.Core.Interfaces;
+using UdsTool.Core.Models;
 
 namespace UdsTool.ViewModels
 {
-    public class EcuCommunicationViewModel : BaseViewModel
+    public class EcuCommunicationViewModel : ViewModelBase
     {
-        private readonly IEcuCommunicationService _communicationService;
+        private readonly IUdsService _udsService;
+        private readonly ICanService _canService;
         private readonly IXmlService _xmlService;
-        private readonly IsoTpSettingsViewModel _isoTpSettingsViewModel;
+        private readonly INavigationService _navigationService;
 
-        private DiagnosticSession _currentSession;
-        private UdsXmlConfig _currentConfig;
-        private string _requestText;
-        private string _statusMessage;
+        private string _selectedInterface;
         private bool _isConnected;
-        private string _portName = "COM1";  // 기본값
-        private UdsSid _selectedSid;
-        private UdsSubfunction _selectedSubfunction;
-        private UdsDid _selectedDid;
+        private string _requestHex;
+        private string _responseHex;
+        private ObservableCollection<string> _interfaces;
+        private ObservableCollection<string> _messageLog;
+        private IsoTpConfig _isoTpConfig;
+        private bool _showIsoTpConfig;
 
-        public EcuCommunicationViewModel(
-            IEcuCommunicationService communicationService,
-            IXmlService xmlService,
-            IsoTpSettingsViewModel isoTpSettingsViewModel)
+        public string SelectedInterface
         {
-            _communicationService = communicationService;
-            _xmlService = xmlService;
-            _isoTpSettingsViewModel = isoTpSettingsViewModel;
-
-            // 이벤트 연결
-            _communicationService.FrameReceived += OnFrameReceived;
-            _isoTpSettingsViewModel.PropertyChanged += OnIsoTpSettingsChanged;
-
-            // 명령어 초기화
-            ConnectCommand = new RelayCommand(_ => ConnectAsync());
-            DisconnectCommand = new RelayCommand(_ => DisconnectAsync(), _ => IsConnected);
-            SendRequestCommand = new RelayCommand(_ => SendRequestAsync(), _ => IsConnected && !string.IsNullOrWhiteSpace(RequestText));
-            LoadConfigCommand = new RelayCommand(_ => LoadConfigAsync());
-            SaveIsoTpSettingsCommand = new RelayCommand(_ => SaveIsoTpSettings());
-            ClearLogsCommand = new RelayCommand(_ => ClearLogs());
-
-            // 기본 세션 생성
-            _currentSession = new DiagnosticSession();
-
-            // 기본 UDS 설정 로드
-            _currentConfig = _xmlService.CreateDefaultConfiguration();
-        }
-
-        public ObservableCollection<IsoTpFrame> Frames => _currentSession?.Frames;
-
-        public string RequestText
-        {
-            get => _requestText;
-            set
-            {
-                if (SetProperty(ref _requestText, value))
-                {
-                    ((RelayCommand)SendRequestCommand).RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        public string StatusMessage
-        {
-            get => _statusMessage;
-            set => SetProperty(ref _statusMessage, value);
+            get => _selectedInterface;
+            set => SetProperty(ref _selectedInterface, value);
         }
 
         public bool IsConnected
         {
             get => _isConnected;
+            private set => SetProperty(ref _isConnected, value);
+        }
+
+        public string RequestHex
+        {
+            get => _requestHex;
+            set => SetProperty(ref _requestHex, value);
+        }
+
+        public string ResponseHex
+        {
+            get => _responseHex;
+            set => SetProperty(ref _responseHex, value);
+        }
+
+        public ObservableCollection<string> Interfaces
+        {
+            get => _interfaces;
+            private set => SetProperty(ref _interfaces, value);
+        }
+
+        public ObservableCollection<string> MessageLog
+        {
+            get => _messageLog;
+            private set => SetProperty(ref _messageLog, value);
+        }
+
+        public IsoTpConfig IsoTpConfig
+        {
+            get => _isoTpConfig;
             set
             {
-                if (SetProperty(ref _isConnected, value))
-                {
-                    ((RelayCommand)DisconnectCommand).RaiseCanExecuteChanged();
-                    ((RelayCommand)SendRequestCommand).RaiseCanExecuteChanged();
-                }
+                SetProperty(ref _isoTpConfig, value);
+                _udsService.Configuration = value;
             }
         }
 
-        public string PortName
+        public bool ShowIsoTpConfig
         {
-            get => _portName;
-            set => SetProperty(ref _portName, value);
+            get => _showIsoTpConfig;
+            set => SetProperty(ref _showIsoTpConfig, value);
         }
-
-        public UdsSid SelectedSid
-        {
-            get => _selectedSid;
-            set
-            {
-                if (SetProperty(ref _selectedSid, value))
-                {
-                    SelectedSubfunction = null;
-                    SelectedDid = null;
-
-                    if (value != null)
-                    {
-                        UpdateRequestText();
-                    }
-                }
-            }
-        }
-
-        public UdsSubfunction SelectedSubfunction
-        {
-            get => _selectedSubfunction;
-            set
-            {
-                if (SetProperty(ref _selectedSubfunction, value))
-                {
-                    SelectedDid = null;
-
-                    if (value != null)
-                    {
-                        UpdateRequestText();
-                    }
-                }
-            }
-        }
-
-        public UdsDid SelectedDid
-        {
-            get => _selectedDid;
-            set
-            {
-                if (SetProperty(ref _selectedDid, value))
-                {
-                    if (value != null)
-                    {
-                        UpdateRequestText();
-                    }
-                }
-            }
-        }
-
-        public ObservableCollection<UdsSid> Services => new ObservableCollection<UdsSid>(_currentConfig?.Services ?? new System.Collections.Generic.List<UdsSid>());
-
-        public IsoTpSettingsViewModel IsoTpSettings => _isoTpSettingsViewModel;
 
         public ICommand ConnectCommand { get; }
         public ICommand DisconnectCommand { get; }
         public ICommand SendRequestCommand { get; }
-        public ICommand LoadConfigCommand { get; }
-        public ICommand SaveIsoTpSettingsCommand { get; }
-        public ICommand ClearLogsCommand { get; }
+        public ICommand ClearLogCommand { get; }
+        public ICommand ConfigureIsoTpCommand { get; }
+        public ICommand SaveIsoTpConfigCommand { get; }
+        public ICommand LoadIsoTpConfigCommand { get; }
+        public ICommand NavigateToIsoTpConfigCommand { get; }
 
-        private void UpdateRequestText()
+        public EcuCommunicationViewModel(
+            IUdsService udsService,
+            ICanService canService,
+            IXmlService xmlService,
+            INavigationService navigationService)
         {
-            if (SelectedSid == null) return;
+            _udsService = udsService ?? throw new ArgumentNullException(nameof(udsService));
+            _canService = canService ?? throw new ArgumentNullException(nameof(canService));
+            _xmlService = xmlService ?? throw new ArgumentNullException(nameof(xmlService));
+            _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
-            var sb = new StringBuilder();
+            // Initialize properties
+            Interfaces = new ObservableCollection<string>(GetAvailableInterfaces());
+            MessageLog = new ObservableCollection<string>();
+            IsoTpConfig = new IsoTpConfig();
+            RequestHex = "";
+            ResponseHex = "";
 
-            // SID 추가
-            sb.Append(ConvertIdToHex(SelectedSid.Id));
+            // Initialize commands
+            ConnectCommand = new RelayCommand(_ => ConnectAsync(), _ => !IsConnected && !string.IsNullOrEmpty(SelectedInterface));
+            DisconnectCommand = new RelayCommand(_ => DisconnectAsync(), _ => IsConnected);
+            SendRequestCommand = new RelayCommand(_ => SendRequestAsync(), _ => IsConnected && !string.IsNullOrEmpty(RequestHex));
+            ClearLogCommand = new RelayCommand(_ => MessageLog.Clear());
+            ConfigureIsoTpCommand = new RelayCommand(_ => ShowIsoTpConfig = !ShowIsoTpConfig);
+            SaveIsoTpConfigCommand = new RelayCommand(_ => SaveIsoTpConfigAsync());
+            LoadIsoTpConfigCommand = new RelayCommand(_ => LoadIsoTpConfigAsync());
+            NavigateToIsoTpConfigCommand = new RelayCommand(_ => _navigationService.NavigateTo<IsoTpConfigViewModel>());
 
-            // Subfunction 추가
-            if (SelectedSubfunction != null)
-            {
-                sb.Append(" ");
-                sb.Append(ConvertIdToHex(SelectedSubfunction.Id));
-
-                // DID 추가
-                if (SelectedDid != null)
-                {
-                    sb.Append(" ");
-                    sb.Append(ConvertIdToHex(SelectedDid.Id));
-
-                    // 데이터 항목 추가 (더미 데이터)
-                    if (SelectedDid.DataItems.Count > 0)
-                    {
-                        int totalLength = SelectedDid.DataItems.Sum(d => d.Length);
-                        for (int i = 0; i < totalLength; i++)
-                        {
-                            sb.Append(" 00");  // 기본값으로 0x00 사용
-                        }
-                    }
-                }
-            }
-
-            RequestText = sb.ToString();
+            // Subscribe to UDS service events
+            _udsService.ResponseReceived += OnResponseReceived;
+            _udsService.MessageLogged += OnMessageLogged;
         }
 
-        private string ConvertIdToHex(string id)
+        private List<string> GetAvailableInterfaces()
         {
-            // 0x 형식의 16진수 문자열을 처리
-            if (id.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-            {
-                return id.Substring(2);
-            }
-            return id;
+            // In a real implementation, this would enumerate all available CAN interfaces
+            // For this example, return some mock interfaces
+            return new List<string> { "vcan0", "can0", "can1", "slcan0", "peak_usb0", "vector0" };
         }
 
         private async void ConnectAsync()
         {
             try
             {
-                _communicationService.CurrentConfig = _isoTpSettingsViewModel.IsoTpConfig;
-                bool result = await _communicationService.ConnectAsync(_portName);
+                IsBusy = true;
+                StatusMessage = "Connecting to CAN interface...";
 
-                if (result)
+                var connected = await _canService.ConnectAsync(SelectedInterface);
+                if (connected)
                 {
+                    await _udsService.InitializeAsync(_canService);
                     IsConnected = true;
-                    _currentSession = new DiagnosticSession
-                    {
-                        IsoTpConfig = _isoTpSettingsViewModel.IsoTpConfig
-                    };
-                    OnPropertyChanged(nameof(Frames));
-                    StatusMessage = $"연결되었습니다: {_portName}";
+                    AddLogMessage($"Connected to {SelectedInterface}");
+                    StatusMessage = "Connected to CAN interface.";
                 }
                 else
                 {
-                    StatusMessage = $"연결 실패: {_portName}";
+                    StatusMessage = "Failed to connect to CAN interface.";
                 }
             }
             catch (Exception ex)
             {
-                StatusMessage = $"연결 오류: {ex.Message}";
+                StatusMessage = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
@@ -237,13 +163,23 @@ namespace UdsTool.ViewModels
         {
             try
             {
-                await _communicationService.DisconnectAsync();
+                IsBusy = true;
+                StatusMessage = "Disconnecting from CAN interface...";
+
+                _udsService.Shutdown();
+                await _canService.DisconnectAsync();
                 IsConnected = false;
-                StatusMessage = "연결이 종료되었습니다.";
+
+                AddLogMessage($"Disconnected from {SelectedInterface}");
+                StatusMessage = "Disconnected from CAN interface.";
             }
             catch (Exception ex)
             {
-                StatusMessage = $"연결 종료 오류: {ex.Message}";
+                StatusMessage = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
@@ -251,133 +187,160 @@ namespace UdsTool.ViewModels
         {
             try
             {
-                // 요청 텍스트를 바이트 배열로 변환
-                byte[] requestData = ParseHexString(RequestText);
-
-                if (requestData.Length == 0)
+                // Parse hex string to byte array
+                byte[] request = ParseHexString(RequestHex);
+                if (request == null || request.Length == 0)
                 {
-                    StatusMessage = "요청 데이터가 비어 있습니다.";
+                    StatusMessage = "Invalid hex format";
                     return;
                 }
 
-                // 요청 전송
-                byte[] responseData = await _communicationService.SendRequestAsync(requestData);
+                IsBusy = true;
+                StatusMessage = "Sending UDS request...";
 
-                // 응답 처리는 이벤트 핸들러에서 수행
-                StatusMessage = "요청이 성공적으로 전송되었습니다.";
+                AddLogMessage($"TX: {BitConverter.ToString(request)}");
+
+                var response = await _udsService.SendRequestAsync(request);
+                if (response != null)
+                {
+                    ResponseHex = BitConverter.ToString(response).Replace("-", " ");
+                    AddLogMessage($"RX: {BitConverter.ToString(response)}");
+                    StatusMessage = "Request completed.";
+                }
+                else
+                {
+                    StatusMessage = "No response received.";
+                }
             }
             catch (Exception ex)
             {
-                StatusMessage = $"요청 전송 오류: {ex.Message}";
+                StatusMessage = $"Error: {ex.Message}";
+                AddLogMessage($"Error: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private void OnResponseReceived(object sender, byte[] response)
+        {
+            // Response is already handled in SendRequestAsync
+            // This event handler is for unsolicited responses
+            if (response != null)
+            {
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    ResponseHex = BitConverter.ToString(response).Replace("-", " ");
+                    AddLogMessage($"RX (Unsolicited): {BitConverter.ToString(response)}");
+                });
+            }
+        }
+
+        private void OnMessageLogged(object sender, string message)
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                AddLogMessage(message);
+            });
+        }
+
+        private void AddLogMessage(string message)
+        {
+            var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+            MessageLog.Add($"[{timestamp}] {message}");
+
+            // Limit log size
+            while (MessageLog.Count > 1000)
+            {
+                MessageLog.RemoveAt(0);
             }
         }
 
         private byte[] ParseHexString(string hexString)
         {
-            if (string.IsNullOrWhiteSpace(hexString))
-                return new byte[0];
-
-            // 공백으로 분리된 16진수 문자열 처리
-            string[] hexValues = hexString.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            byte[] result = new byte[hexValues.Length];
-
-            for (int i = 0; i < hexValues.Length; i++)
+            try
             {
-                string hexValue = hexValues[i].Trim();
-                if (hexValue.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-                    hexValue = hexValue.Substring(2);
+                // Remove spaces, dashes, etc.
+                hexString = hexString.Replace(" ", "").Replace("-", "");
 
-                if (!byte.TryParse(hexValue, System.Globalization.NumberStyles.HexNumber, null, out byte value))
+                // Check if string has a valid length
+                if (hexString.Length % 2 != 0)
+                    return null;
+
+                // Convert to byte array
+                var byteArray = new byte[hexString.Length / 2];
+                for (int i = 0; i < byteArray.Length; i++)
                 {
-                    throw new FormatException($"잘못된 16진수 형식: {hexValues[i]}");
+                    byteArray[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
                 }
 
-                result[i] = value;
+                return byteArray;
             }
-
-            return result;
-        }
-
-        private void OnFrameReceived(object sender, IsoTpFrame frame)
-        {
-            // UI 스레드에서 프레임 추가
-            App.Current.Dispatcher.Invoke(() =>
+            catch
             {
-                _currentSession.Frames.Add(frame);
-                StatusMessage = $"프레임 수신: {frame.Description}";
-            });
-        }
-
-        private void OnIsoTpSettingsChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (IsConnected)
-            {
-                _communicationService.CurrentConfig = _isoTpSettingsViewModel.IsoTpConfig;
-                StatusMessage = "ISO-TP 설정이 업데이트되었습니다.";
+                return null;
             }
         }
 
-        private async void LoadConfigAsync()
+        private async void SaveIsoTpConfigAsync()
         {
-            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            try
             {
-                Filter = "XML 파일 (*.xml)|*.xml|모든 파일 (*.*)|*.*",
-                Title = "UDS 설정 파일 열기"
-            };
+                var saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "XML Files (*.xml)|*.xml|All Files (*.*)|*.*",
+                    Title = "Save ISO-TP Configuration"
+                };
 
-            if (openFileDialog.ShowDialog() == true)
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    IsBusy = true;
+                    StatusMessage = "Saving ISO-TP configuration...";
+
+                    await _xmlService.SaveIsoTpConfigAsync(saveFileDialog.FileName, IsoTpConfig);
+
+                    StatusMessage = "ISO-TP configuration saved successfully.";
+                }
+            }
+            catch (Exception ex)
             {
-                try
-                {
-                    _currentConfig = await _xmlService.LoadConfigurationAsync(openFileDialog.FileName);
-                    OnPropertyChanged(nameof(Services));
-                    StatusMessage = $"설정 파일을 성공적으로 불러왔습니다: {openFileDialog.FileName}";
-                }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"설정 파일을 불러오는 중 오류가 발생했습니다: {ex.Message}";
-                }
+                StatusMessage = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
-        // SaveIsoTpSettings 메소드 구현
-        private async void SaveIsoTpSettings()
+        private async void LoadIsoTpConfigAsync()
         {
-            var saveFileDialog = new SaveFileDialog
+            try
             {
-                Filter = "ISO-TP 설정 파일 (*.isotp)|*.isotp|XML 파일 (*.xml)|*.xml|모든 파일 (*.*)|*.*",
-                Title = "ISO-TP 설정 저장",
-                FileName = $"IsoTpConfig_{DateTime.Now:yyyyMMdd}.isotp"
-            };
+                var openFileDialog = new OpenFileDialog
+                {
+                    Filter = "XML Files (*.xml)|*.xml|All Files (*.*)|*.*",
+                    Title = "Open ISO-TP Configuration"
+                };
 
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                try
+                if (openFileDialog.ShowDialog() == true)
                 {
-                    await SaveIsoTpConfigToFileAsync(_isoTpSettingsViewModel.IsoTpConfig, saveFileDialog.FileName);
-                    StatusMessage = $"ISO-TP 설정이 성공적으로 저장되었습니다: {saveFileDialog.FileName}";
-                }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"ISO-TP 설정 저장 중 오류가 발생했습니다: {ex.Message}";
+                    IsBusy = true;
+                    StatusMessage = "Loading ISO-TP configuration...";
+
+                    var config = await _xmlService.LoadIsoTpConfigAsync(openFileDialog.FileName);
+                    IsoTpConfig = config;
+
+                    StatusMessage = "ISO-TP configuration loaded successfully.";
                 }
             }
-        }
-
-        // ISO-TP 설정을 파일로 저장하는 메소드
-        private async Task SaveIsoTpConfigToFileAsync(IsoTpConfig config, string filePath)
-        {
-            using (FileStream stream = new FileStream(filePath, FileMode.Create))
+            catch (Exception ex)
             {
-                XmlSerializer serializer = new XmlSerializer(typeof(IsoTpConfig));
-                serializer.Serialize(stream, config);
+                StatusMessage = $"Error: {ex.Message}";
             }
-        }
-
-        private void ClearLogs()
-        {
-            _currentSession.Frames.Clear();
-            StatusMessage = "로그가 초기화되었습니다.";
+            finally
+            {
+                IsBusy = false;
+            }
         }
     }
-}

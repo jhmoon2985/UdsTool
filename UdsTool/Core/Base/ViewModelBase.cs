@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows.Input;
 
-namespace UdsTool.ViewModels
+namespace UdsTool.Core.Base
 {
-    public class BaseViewModel : INotifyPropertyChanged
+    public class ObservableObject : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -23,6 +20,24 @@ namespace UdsTool.ViewModels
             field = value;
             OnPropertyChanged(propertyName);
             return true;
+        }
+    }
+
+    public class ViewModelBase : ObservableObject
+    {
+        private bool _isBusy;
+        private string _statusMessage;
+
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set => SetProperty(ref _isBusy, value);
+        }
+
+        public string StatusMessage
+        {
+            get => _statusMessage;
+            set => SetProperty(ref _statusMessage, value);
         }
     }
 }

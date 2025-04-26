@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace UdsTool.Converters
+namespace UdsTool.Utils.Converters
 {
     public class HexConverter : IValueConverter
     {

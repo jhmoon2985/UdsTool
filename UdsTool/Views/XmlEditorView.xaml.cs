@@ -1,28 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// Views/XmlEditorView.xaml.cs
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using UdsTool.Core.Models;
+using UdsTool.ViewModels;
 
 namespace UdsTool.Views
 {
-    /// <summary>
-    /// XmlEditorView.xaml에 대한 상호 작용 논리
-    /// </summary>
     public partial class XmlEditorView : UserControl
     {
+        private XmlEditorViewModel ViewModel => DataContext as XmlEditorViewModel;
+
         public XmlEditorView()
         {
             InitializeComponent();
+        }
+
+        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (e.NewValue is UdsConfiguration message && ViewModel != null)
+            {
+                // TreeView에서 선택한 메시지를 ViewModel에 설정
+                ViewModel.SelectedMessage = message;
+            }
         }
     }
 }

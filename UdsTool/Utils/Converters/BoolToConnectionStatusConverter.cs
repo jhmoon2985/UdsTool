@@ -6,19 +6,18 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace UdsTool.Converters
+namespace UdsTool.Utils.Converters
 {
-    public class NotNullConverter : IValueConverter
+    public class BoolToConnectionStatusConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value != null;
+            return value is bool boolValue && boolValue ? "Connected" : "Disconnected";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            //throw new NotImplementedException();
-            return null;
+            return value is string stringValue && stringValue == "Connected";
         }
     }
 }

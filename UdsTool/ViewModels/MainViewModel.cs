@@ -1,53 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using UdsTool.Services;
+using UdsTool.Core.Base;
+using UdsTool.Core.Interfaces;
 
 namespace UdsTool.ViewModels
 {
-    public class MainViewModel : BaseViewModel
+    public class MainViewModel : ViewModelBase
     {
         private readonly INavigationService _navigationService;
-        private object _currentView;
-        private string _title = "UDS Diagnostic Tool";
-
-        public MainViewModel(
-            INavigationService navigationService,
-            XmlEditorViewModel xmlEditorViewModel,
-            EcuCommunicationViewModel ecuCommunicationViewModel)
-        {
-            _navigationService = navigationService;
-
-            // 네비게이션 이벤트 구독
-            _navigationService.NavigationRequested += (sender, viewName) =>
-            {
-                switch (viewName)
-                {
-                    case "XmlEditor":
-                        CurrentView = xmlEditorViewModel;
-                        break;
-                    case "EcuCommunication":
-                        CurrentView = ecuCommunicationViewModel;
-                        break;
-                }
-            };
-
-            // 명령어 초기화
-            ShowXmlEditorCommand = new RelayCommand(_ => _navigationService.NavigateTo("XmlEditor"));
-            ShowEcuCommunicationCommand = new RelayCommand(_ => _navigationService.NavigateTo("EcuCommunication"));
-
-            // 기본 화면 설정
-            _navigationService.NavigateTo("XmlEditor");
-        }
-
-        public object CurrentView
-        {
-            get => _currentView;
-            set => SetProperty(ref _currentView, value);
-        }
+        private string _title = "UDS Tool";
 
         public string Title
         {
@@ -55,7 +16,29 @@ namespace UdsTool.ViewModels
             set => SetProperty(ref _title, value);
         }
 
-        public ICommand ShowXmlEditorCommand { get; }
-        public ICommand ShowEcuCommunicationCommand { get; }
+        public ICommand NavigateToXmlEditorCommand { get; }
+        public ICommand NavigateToEcuCommunicationCommand { get; }
+
+        public MainViewModel(INavigationService navigationService)
+        {
+            _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+
+            // Initialize navigation commands
+            NavigateToXmlEditorCommand = new RelayCommand(_ => NavigateToXmlEditor());
+            NavigateToEcuCommunicationCommand = new RelayCommand(_ => NavigateToEcuCommunication());
+
+            // Set default view
+            NavigateToXmlEditor();
+        }
+
+        private void NavigateToXmlEditor()
+        {
+            _navigationService.NavigateTo<XmlEditorViewModel>();
+        }
+
+        private void NavigateToEcuCommunication()
+        {
+            _navigationService.NavigateTo<EcuCommunicationViewModel>();
+        }
     }
 }

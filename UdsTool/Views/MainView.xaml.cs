@@ -10,17 +10,16 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace UdsTool.Views
 {
     /// <summary>
-    /// IsoTpSettingsView.xaml에 대한 상호 작용 논리
+    /// MainView.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class IsoTpSettingsView : UserControl
+    public partial class MainView : Window
     {
-        public IsoTpSettingsView()
+        public MainView()
         {
             InitializeComponent();
         }

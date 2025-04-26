@@ -1,116 +1,158 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using UdsTool.Models;
+using UdsTool.Core.Interfaces;
+using UdsTool.Core.Models;
 
 namespace UdsTool.Services
 {
     public class XmlService : IXmlService
     {
-        public async Task<UdsXmlConfig> LoadConfigurationAsync(string filePath)
+        public async Task<UdsDatabase> LoadDatabaseAsync(string filePath)
         {
             try
             {
-                using (FileStream stream = new FileStream(filePath, FileMode.Open))
+                using (var fileStream = new FileStream(filePath, FileMode.Open))
                 {
-                    XmlSerializer serializer = new XmlSerializer(typeof(UdsXmlConfig));
-                    var config = (UdsXmlConfig)serializer.Deserialize(stream);
-                    config.FilePath = filePath;
-                    return config;
+                    var serializer = new XmlSerializer(typeof(UdsDatabase));
+                    return await Task.Run(() => (UdsDatabase)serializer.Deserialize(fileStream));
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"XML 파일 로드 중 오류 발생: {ex.Message}", ex);
+                throw new Exception($"Failed to load UDS database: {ex.Message}", ex);
             }
         }
 
-        public async Task SaveConfigurationAsync(UdsXmlConfig configuration, string filePath)
+        public async Task SaveDatabaseAsync(string filePath, UdsDatabase database)
         {
             try
             {
-                using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
-                    XmlSerializer serializer = new XmlSerializer(typeof(UdsXmlConfig));
-                    serializer.Serialize(stream, configuration);
-                    configuration.FilePath = filePath;
+                    var serializer = new XmlSerializer(typeof(UdsDatabase));
+                    await Task.Run(() => serializer.Serialize(fileStream, database));
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"XML 파일 저장 중 오류 발생: {ex.Message}", ex);
+                throw new Exception($"Failed to save UDS database: {ex.Message}", ex);
             }
         }
 
-        public UdsXmlConfig CreateDefaultConfiguration()
+        public async Task<IsoTpConfig> LoadIsoTpConfigAsync(string filePath)
         {
-            var config = new UdsXmlConfig();
-
-            // 기본 SID 추가 (예시)
-            var readDataSid = new UdsSid
+            try
             {
-                Id = "0x22",
-                Name = "ReadDataByIdentifier",
-                Description = "데이터 ID를 통해 데이터 읽기"
-            };
-
-            var writeDataSid = new UdsSid
+                using (var fileStream = new FileStream(filePath, FileMode.Open))
+                {
+                    var serializer = new XmlSerializer(typeof(IsoTpConfig));
+                    return await Task.Run(() => (IsoTpConfig)serializer.Deserialize(fileStream));
+                }
+            }
+            catch (Exception ex)
             {
-                Id = "0x2E",
-                Name = "WriteDataByIdentifier",
-                Description = "데이터 ID를 통해 데이터 쓰기"
-            };
+                throw new Exception($"Failed to load ISO-TP configuration: {ex.Message}", ex);
+            }
+        }
 
-            var diagnosticControlSid = new UdsSid
+        public async Task SaveIsoTpConfigAsync(string filePath, IsoTpConfig config)
+        {
+            try
             {
-                Id = "0x10",
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    var serializer = new XmlSerializer(typeof(IsoTpConfig));
+                    await Task.Run(() => serializer.Serialize(fileStream, config));
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to save ISO-TP configuration: {ex.Message}", ex);
+            }
+        }
+
+        public UdsDatabase CreateDefaultDatabase()
+        {
+            var database = new UdsDatabase();
+            var serviceIds = database.ServiceIds;
+
+            // Add some default services
+            var diagnosticsSessionControl = new ServiceId
+            {
                 Name = "DiagnosticSessionControl",
-                Description = "진단 세션 제어"
+                Description = "Diagnostic Session Control",
+                Value = 0x10
             };
 
-            // Subfunction 예시 추가
-            var defaultSessionSubfunc = new UdsSubfunction
+            // Add subfunctions to DiagnosticSessionControl
+            diagnosticsSessionControl.Subfunctions.Add(new Subfunction
             {
-                Id = "0x01",
                 Name = "DefaultSession",
-                Description = "기본 진단 세션"
-            };
-
-            var extendedSessionSubfunc = new UdsSubfunction
+                Description = "Default Session",
+                Value = 0x01
+            });
+            diagnosticsSessionControl.Subfunctions.Add(new Subfunction
             {
-                Id = "0x02",
+                Name = "ProgrammingSession",
+                Description = "Programming Session",
+                Value = 0x02
+            });
+            diagnosticsSessionControl.Subfunctions.Add(new Subfunction
+            {
                 Name = "ExtendedSession",
-                Description = "확장 진단 세션"
-            };
-
-            diagnosticControlSid.Subfunctions.Add(defaultSessionSubfunc);
-            diagnosticControlSid.Subfunctions.Add(extendedSessionSubfunc);
-
-            // 샘플 DID 추가
-            var vinDid = new UdsDid
-            {
-                Id = "0xF190",
-                Name = "VIN",
-                Description = "Vehicle Identification Number"
-            };
-
-            readDataSid.Subfunctions.Add(new UdsSubfunction
-            {
-                Id = "ReadVIN",
-                Name = "Vehicle ID",
-                Description = "차량 ID 정보 읽기"
+                Description = "Extended Diagnostic Session",
+                Value = 0x03
             });
 
-            // 기본 구성에 추가
-            config.Services.Add(diagnosticControlSid);
-            config.Services.Add(readDataSid);
-            config.Services.Add(writeDataSid);
+            serviceIds.Add(diagnosticsSessionControl);
 
-            return config;
+            // Add ReadDataByIdentifier
+            var readDataById = new ServiceId
+            {
+                Name = "ReadDataByIdentifier",
+                Description = "Read Data By Identifier",
+                Value = 0x22
+            };
+
+            // Add DIDs to ReadDataByIdentifier
+            var vinDid = new DataId
+            {
+                Name = "VIN",
+                Description = "Vehicle Identification Number",
+                Value = 0xF1
+            };
+            readDataById.DataIds.Add(vinDid);
+
+            var ecnDid = new DataId
+            {
+                Name = "ECUName",
+                Description = "ECU Name",
+                Value = 0xF2
+            };
+            readDataById.DataIds.Add(ecnDid);
+
+            serviceIds.Add(readDataById);
+
+            // Add WriteDataByIdentifier
+            var writeDataById = new ServiceId
+            {
+                Name = "WriteDataByIdentifier",
+                Description = "Write Data By Identifier",
+                Value = 0x2E
+            };
+            writeDataById.DataIds.Add(new DataId
+            {
+                Name = "TestIdentifier",
+                Description = "Test Identifier",
+                Value = 0x01
+            });
+
+            serviceIds.Add(writeDataById);
+
+            return database;
         }
     }
 }

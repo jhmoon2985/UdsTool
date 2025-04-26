@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows;
 
-namespace UdsTool.Converters
+namespace UdsTool.Utils.Converters
 {
     public class VisibilityConverter : IValueConverter
     {
