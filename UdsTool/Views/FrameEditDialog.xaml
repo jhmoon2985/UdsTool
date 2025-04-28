@@ -7,7 +7,7 @@
         xmlns:behaviors="clr-namespace:UdsTool.Behaviors"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
-        Title="Edit Diagnostic Frame" Height="400" Width="500"
+        Title="Edit Diagnostic Frame" Height="500" Width="600"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
     <Grid Margin="10">
@@ -25,17 +25,23 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="120"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="100"/>
         </Grid.ColumnDefinitions>
 
         <!-- Name -->
         <TextBlock Text="Name:" Grid.Row="0" VerticalAlignment="Center" Margin="0,5"/>
         <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
-                 Grid.Row="0" Grid.Column="1" Margin="0,5"/>
+                 Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,5"/>
 
         <!-- Service ID -->
         <TextBlock Text="Service ID (Hex):" Grid.Row="1" VerticalAlignment="Center" Margin="0,5"/>
-        <TextBox Text="{Binding ServiceId, UpdateSourceTrigger=PropertyChanged}" 
-                 Grid.Row="1" Grid.Column="1" Margin="0,5">
+        <ComboBox ItemsSource="{Binding ServiceIdentifiers}" 
+                  SelectedValue="{Binding SelectedServiceId}"
+                  DisplayMemberPath="Value"
+                  SelectedValuePath="Key"
+                  Grid.Row="1" Grid.Column="1" Margin="0,5"/>
+        <TextBox Text="{Binding ServiceIdHex, UpdateSourceTrigger=PropertyChanged}" 
+                 Grid.Row="1" Grid.Column="2" Margin="5,5,0,5">
             <i:Interaction.Behaviors>
                 <behaviors:HexTextBoxBehavior/>
             </i:Interaction.Behaviors>
@@ -43,8 +49,13 @@
 
         <!-- SubFunction -->
         <TextBlock Text="SubFunction (Hex):" Grid.Row="2" VerticalAlignment="Center" Margin="0,5"/>
-        <TextBox Text="{Binding SubFunction, UpdateSourceTrigger=PropertyChanged}" 
-                 Grid.Row="2" Grid.Column="1" Margin="0,5">
+        <ComboBox ItemsSource="{Binding SubFunctions}" 
+                  SelectedValue="{Binding SelectedSubFunction}"
+                  DisplayMemberPath="Value"
+                  SelectedValuePath="Key"
+                  Grid.Row="2" Grid.Column="1" Margin="0,5"/>
+        <TextBox Text="{Binding SubFunctionHex, UpdateSourceTrigger=PropertyChanged}" 
+                 Grid.Row="2" Grid.Column="2" Margin="5,5,0,5">
             <i:Interaction.Behaviors>
                 <behaviors:HexTextBoxBehavior/>
             </i:Interaction.Behaviors>
@@ -52,8 +63,13 @@
 
         <!-- DID -->
         <TextBlock Text="DID (Hex):" Grid.Row="3" VerticalAlignment="Center" Margin="0,5"/>
-        <TextBox Text="{Binding Did, UpdateSourceTrigger=PropertyChanged}" 
-                 Grid.Row="3" Grid.Column="1" Margin="0,5">
+        <ComboBox ItemsSource="{Binding DataIdentifiers}" 
+                  SelectedValue="{Binding SelectedDid}"
+                  DisplayMemberPath="Value"
+                  SelectedValuePath="Key"
+                  Grid.Row="3" Grid.Column="1" Margin="0,5"/>
+        <TextBox Text="{Binding DidHex, UpdateSourceTrigger=PropertyChanged}" 
+                 Grid.Row="3" Grid.Column="2" Margin="5,5,0,5">
             <i:Interaction.Behaviors>
                 <behaviors:HexTextBoxBehavior/>
             </i:Interaction.Behaviors>
@@ -62,7 +78,7 @@
         <!-- Type -->
         <TextBlock Text="Type:" Grid.Row="4" VerticalAlignment="Center" Margin="0,5"/>
         <ComboBox SelectedValue="{Binding Type}" 
-                  Grid.Row="4" Grid.Column="1" Margin="0,5">
+                  Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,5">
             <ComboBox.Items>
                 <models:RequestResponseType>Request</models:RequestResponseType>
                 <models:RequestResponseType>Response</models:RequestResponseType>
@@ -72,7 +88,7 @@
         <!-- Data -->
         <TextBlock Text="Data (Hex):" Grid.Row="5" VerticalAlignment="Center" Margin="0,5"/>
         <TextBox Text="{Binding Data, UpdateSourceTrigger=PropertyChanged}" 
-                 Grid.Row="5" Grid.Column="1" Margin="0,5" 
+                 Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,5" 
                  AcceptsReturn="True" Height="60"
                  VerticalScrollBarVisibility="Auto">
             <i:Interaction.Behaviors>
@@ -81,12 +97,12 @@
         </TextBox>
 
         <!-- Info -->
-        <TextBlock Grid.Row="6" Grid.ColumnSpan="2" Margin="0,10,0,0"
+        <TextBlock Grid.Row="6" Grid.ColumnSpan="3" Margin="0,10,0,0"
                    Text="Enter hex values separated by spaces (e.g., 01 02 03)"
                    FontStyle="Italic" Foreground="Gray"/>
 
         <!-- Buttons -->
-        <StackPanel Grid.Row="8" Grid.ColumnSpan="2" Orientation="Horizontal" 
+        <StackPanel Grid.Row="8" Grid.ColumnSpan="3" Orientation="Horizontal" 
                     HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Content="OK" Width="80" Margin="0,0,10,0" 
                     Command="{Binding OkCommand}"/>

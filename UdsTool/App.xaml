@@ -9,6 +9,8 @@
         <!-- Converters -->
         <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatusConverter"/>
         <converters:ByteArrayToHexStringConverter x:Key="ByteArrayToHexStringConverter"/>
+        <converters:BoolToActiveBackgroundConverter x:Key="BoolToActiveBackgroundConverter"/>
+        <converters:BoolToActiveForegroundConverter x:Key="BoolToActiveForegroundConverter"/>
 
         <!-- DataTemplates for ViewModels -->
         <DataTemplate DataType="{x:Type viewModels:XmlEditorViewModel}">

@@ -17,10 +17,18 @@
         <StackPanel Orientation="Horizontal" Grid.Row="0" Background="#F0F0F0" Margin="5">
             <Button Content="XML Editor" 
                     Command="{Binding NavigateToXmlEditorCommand}" 
-                    Margin="5" Padding="10,5"/>
+                    Background="{Binding IsXmlEditorActive, Converter={StaticResource BoolToActiveBackgroundConverter}}"
+                    Foreground="{Binding IsXmlEditorActive, Converter={StaticResource BoolToActiveForegroundConverter}}"
+                    Margin="5" Padding="15,8" FontWeight="Medium"/>
             <Button Content="ECU Communication" 
                     Command="{Binding NavigateToEcuCommunicationCommand}" 
-                    Margin="5" Padding="10,5"/>
+                    Background="{Binding IsEcuCommunicationActive, Converter={StaticResource BoolToActiveBackgroundConverter}}"
+                    Foreground="{Binding IsEcuCommunicationActive, Converter={StaticResource BoolToActiveForegroundConverter}}"
+                    Margin="5" Padding="15,8" FontWeight="Medium"/>
+            <!-- 현재 화면 표시 -->
+            <TextBlock Text="{Binding CurrentViewName, StringFormat='Current View: {0}'}" 
+                       VerticalAlignment="Center" Margin="20,0,0,0" 
+                       FontWeight="Bold"/>
         </StackPanel>
 
         <!-- Content Area -->

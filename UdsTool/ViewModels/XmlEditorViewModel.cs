@@ -139,7 +139,15 @@ namespace UdsTool.ViewModels
 
         private void UpdateXmlView()
         {
-            XmlContent = _xmlService.SerializeToXml(DiagnosticFrames);
+            try
+            {
+                XmlContent = _xmlService.SerializeToXml(DiagnosticFrames);
+            }
+            catch (Exception ex)
+            {
+                // 오류 처리
+                XmlContent = $"Error updating XML view: {ex.Message}";
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
