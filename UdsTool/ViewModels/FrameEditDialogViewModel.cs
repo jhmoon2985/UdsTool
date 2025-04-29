@@ -20,6 +20,7 @@ namespace UdsTool.ViewModels
         private string _subFunctionHex;
         private string _didHex;
         private string _data;
+        private int _idx;
         private RequestResponseType _type;
         private ICloseable _window;
         private Dictionary<byte, string> _subFunctions;
@@ -36,6 +37,7 @@ namespace UdsTool.ViewModels
         {
             if (frame != null)
             {
+                Idx = frame.Idx;
                 Name = frame.Name;
                 SelectedServiceId = frame.ServiceId;
                 SelectedSubFunction = frame.SubFunction;
@@ -68,6 +70,12 @@ namespace UdsTool.ViewModels
         {
             get => _name;
             set { _name = value; OnPropertyChanged(); }
+        }
+
+        public int Idx
+        {
+            get => _idx;
+            set { _idx = value; }
         }
 
         public Dictionary<byte, string> ServiceIdentifiers => UdsDefinitions.ServiceIdentifiers;
@@ -193,6 +201,7 @@ namespace UdsTool.ViewModels
         {
             return new DiagnosticFrame
             {
+                Idx = Idx,
                 Name = Name,
                 ServiceId = _selectedServiceId,
                 SubFunction = _selectedSubFunction,

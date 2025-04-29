@@ -12,6 +12,10 @@ namespace UdsTool.Services
         {
             try
             {
+                // 저장하기 전에 순서대로 정렬
+                var orderedFrames = new ObservableCollection<DiagnosticFrame>(
+                    frames.OrderBy(frame => frame.Idx).ToList());
+
                 var serializer = new XmlSerializer(typeof(ObservableCollection<DiagnosticFrame>));
                 using (var writer = new StreamWriter(filePath))
                 {
@@ -44,6 +48,10 @@ namespace UdsTool.Services
         {
             try
             {
+                // 문자열 변환 전에 순서대로 정렬
+                var orderedFrames = new ObservableCollection<DiagnosticFrame>(
+                    frames.OrderBy(frame => frame.Idx).ToList());
+
                 var serializer = new XmlSerializer(typeof(ObservableCollection<DiagnosticFrame>));
                 using (var writer = new StringWriter())
                 {

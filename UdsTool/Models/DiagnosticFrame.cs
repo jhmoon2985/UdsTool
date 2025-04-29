@@ -3,16 +3,33 @@ using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 using System.ComponentModel;
 using System.Linq;
+using System.Windows.Controls;
+using System.Runtime.CompilerServices;
 
 namespace UdsTool.Models
 {
     [XmlRoot("DiagnosticFrame")]
-    public class DiagnosticFrame
+    public class DiagnosticFrame : INotifyPropertyChanged
     {
         private byte _serviceId;
         private byte _subFunction;
         private ushort _dataIdentifier;
         private byte[] _data;
+        private int _idx;
+
+        [XmlAttribute("Idx")]
+        public int Idx
+        {
+            get => _idx;
+            set
+            {
+                if (_idx != value)
+                {
+                    _idx = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         [XmlAttribute("Name")]
         public string Name { get; set; }
@@ -99,6 +116,12 @@ namespace UdsTool.Models
 
         [XmlIgnore]
         public ObservableCollection<DiagnosticFrame> Children { get; set; } = new ObservableCollection<DiagnosticFrame>();
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     public enum RequestResponseType
