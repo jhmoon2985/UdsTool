@@ -6,10 +6,14 @@
         xmlns:models="clr-namespace:UdsTool.Models"
         xmlns:behaviors="clr-namespace:UdsTool.Behaviors"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:converters="clr-namespace:UdsTool.Converters"
         mc:Ignorable="d"
-        Title="Edit Diagnostic Frame" Height="500" Width="600"
+        Title="Edit Diagnostic Frame" Height="520" Width="600"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="LocalBoolToVisibilityConverter"/>
+    </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -85,10 +89,25 @@
             </ComboBox.Items>
         </ComboBox>
 
+        <!-- Response To (Request ID) -->
+        <TextBlock Text="Response To:" Grid.Row="5" VerticalAlignment="Center" Margin="0,5"
+                  Visibility="{Binding IsResponseType, Converter={StaticResource LocalBoolToVisibilityConverter}}"/>
+        <ComboBox ItemsSource="{Binding AvailableRequests}" 
+                  SelectedValue="{Binding SelectedRequestIdx}"
+                  DisplayMemberPath="Value"
+                  SelectedValuePath="Key"
+                  Grid.Row="5" Grid.Column="1" Margin="0,5"
+                  Visibility="{Binding IsResponseType, Converter={StaticResource LocalBoolToVisibilityConverter}}"/>
+        <TextBox Text="{Binding ResponseIdxText, UpdateSourceTrigger=PropertyChanged}" 
+                 Grid.Row="5" Grid.Column="2" Margin="5,5,0,5"
+                 Visibility="{Binding IsResponseType, Converter={StaticResource LocalBoolToVisibilityConverter}}">
+            <TextBox.ToolTip>Enter Request ID directly</TextBox.ToolTip>
+        </TextBox>
+
         <!-- Data -->
-        <TextBlock Text="Data (Hex):" Grid.Row="5" VerticalAlignment="Center" Margin="0,5"/>
+        <TextBlock Text="Data (Hex):" Grid.Row="6" VerticalAlignment="Center" Margin="0,5"/>
         <TextBox Text="{Binding Data, UpdateSourceTrigger=PropertyChanged}" 
-                 Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,5" 
+                 Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,5" 
                  AcceptsReturn="True" Height="60"
                  VerticalScrollBarVisibility="Auto">
             <i:Interaction.Behaviors>
@@ -97,7 +116,7 @@
         </TextBox>
 
         <!-- Info -->
-        <TextBlock Grid.Row="6" Grid.ColumnSpan="3" Margin="0,10,0,0"
+        <TextBlock Grid.Row="7" Grid.ColumnSpan="3" Margin="0,10,0,0"
                    Text="Enter hex values separated by spaces (e.g., 01 02 03)"
                    FontStyle="Italic" Foreground="Gray"/>
 

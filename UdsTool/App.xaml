@@ -11,6 +11,7 @@
         <converters:ByteArrayToHexStringConverter x:Key="ByteArrayToHexStringConverter"/>
         <converters:BoolToActiveBackgroundConverter x:Key="BoolToActiveBackgroundConverter"/>
         <converters:BoolToActiveForegroundConverter x:Key="BoolToActiveForegroundConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
         <!-- DataTemplates for ViewModels -->
         <DataTemplate DataType="{x:Type viewModels:XmlEditorViewModel}">

@@ -38,15 +38,17 @@ namespace UdsTool.Services
                 {
                     var loadedFrames = (ObservableCollection<DiagnosticFrame>)serializer.Deserialize(reader);
 
-                    // 자식 프레임 컬렉션 초기화 - XML 직렬화/역직렬화 과정에서 누락될 수 있음
+                    // 각 프레임마다 필요한 초기화 작업 수행
                     foreach (var frame in loadedFrames)
                     {
+                        // Children 컬렉션이 없으면 초기화
                         if (frame.Children == null)
                         {
                             frame.Children = new ObservableCollection<DiagnosticFrame>();
                         }
                     }
 
+                    // ResponseIdx 기반으로 Request-Response 관계 복원은 ViewModel에서 처리
                     return loadedFrames;
                 }
             }

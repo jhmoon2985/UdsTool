@@ -44,55 +44,82 @@
                 </Button>
             </StackPanel>
 
-            <TreeView Grid.Row="2" 
-                      ItemsSource="{Binding DiagnosticFrames}"
-                      Margin="5">
-                <i:Interaction.Behaviors>
-                    <behaviors:TreeViewBehavior SelectedItem="{Binding SelectedFrame, Mode=TwoWay}"/>
-                </i:Interaction.Behaviors>
-                <TreeView.Resources>
-                    <Style TargetType="TreeViewItem">
-                        <Setter Property="IsExpanded" Value="True"/>
-                    </Style>
-                </TreeView.Resources>
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Idx, StringFormat='{}{0}. '}" FontWeight="Bold" Margin="0,0,5,0"/>
-                            <TextBlock Text="{Binding Name}" Margin="0,0,10,0"/>
-                            <TextBlock Text="{Binding ServiceId, StringFormat={}SID: 0x{0:X2}}" Margin="0,0,10,0"/>
-                            <TextBlock Text="{Binding Type}" FontStyle="Italic">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Type}" Value="Request">
-                                                <Setter Property="Foreground" Value="Blue"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Type}" Value="Response">
-                                                <Setter Property="Foreground" Value="Green"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-                <TreeView.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="Add Request" Command="{Binding AddRequestCommand}"/>
-                        <MenuItem Header="Add Response" Command="{Binding AddResponseToSelectedCommand}"/>
-                        <MenuItem Header="Edit Frame" Command="{Binding EditFrameCommand}"/>
-                        <MenuItem Header="Delete Frame" Command="{Binding DeleteFrameCommand}"/>
-                        <Separator/>
-                        <MenuItem Header="Move Up" Command="{Binding MoveUpCommand}"/>
-                        <MenuItem Header="Move Down" Command="{Binding MoveDownCommand}"/>
-                    </ContextMenu>
-                </TreeView.ContextMenu>
-            </TreeView>
+            <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Requests List -->
+                <GroupBox Grid.Row="0" Header="Requests" Margin="5,0,5,0">
+                    <ListView ItemsSource="{Binding RequestFrames}" 
+                              SelectedItem="{Binding SelectedRequestFrame, Mode=TwoWay}"
+                              BorderThickness="0" Margin="0">
+                        <i:Interaction.Behaviors>
+                            <behaviors:TreeViewBehavior SelectedItem="{Binding SelectedFrame, Mode=TwoWay}"/>
+                        </i:Interaction.Behaviors>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Idx, StringFormat='{}{0}. '}" FontWeight="Bold" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{Binding Name}" Margin="0,0,10,0"/>
+                                    <TextBlock Text="{Binding ServiceId, StringFormat={}SID: 0x{0:X2}}" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Request" Foreground="Blue" FontStyle="Italic"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Add Request" Command="{Binding AddRequestCommand}"/>
+                                <MenuItem Header="Add Response for this Request" Command="{Binding AddResponseToSelectedCommand}"/>
+                                <MenuItem Header="Edit Request" Command="{Binding EditFrameCommand}"/>
+                                <MenuItem Header="Delete Request" Command="{Binding DeleteFrameCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="Move Up" Command="{Binding MoveUpCommand}"/>
+                                <MenuItem Header="Move Down" Command="{Binding MoveDownCommand}"/>
+                            </ContextMenu>
+                        </ListView.ContextMenu>
+                    </ListView>
+                </GroupBox>
+
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"/>
+
+                <!-- Responses List -->
+                <GroupBox Grid.Row="2" Header="Responses" Margin="5,0,5,0">
+                    <ListView ItemsSource="{Binding ResponseFrames}" 
+                              SelectedItem="{Binding SelectedResponseFrame, Mode=TwoWay}"
+                              BorderThickness="0" Margin="0">
+                        <i:Interaction.Behaviors>
+                            <behaviors:TreeViewBehavior SelectedItem="{Binding SelectedFrame, Mode=TwoWay}"/>
+                        </i:Interaction.Behaviors>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Idx, StringFormat='{}{0}. '}" FontWeight="Bold" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{Binding Name}" Margin="0,0,10,0"/>
+                                    <TextBlock Text="{Binding ServiceId, StringFormat={}SID: 0x{0:X2}}" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Response" Foreground="Green" FontStyle="Italic"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Add Response" Command="{Binding AddResponseCommand}"/>
+                                <MenuItem Header="Edit Response" Command="{Binding EditFrameCommand}"/>
+                                <MenuItem Header="Delete Response" Command="{Binding DeleteFrameCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="Move Up" Command="{Binding MoveUpCommand}"/>
+                                <MenuItem Header="Move Down" Command="{Binding MoveDownCommand}"/>
+                            </ContextMenu>
+                        </ListView.ContextMenu>
+                    </ListView>
+                </GroupBox>
+            </Grid>
 
             <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="5">
-                <Button Content="Add" Command="{Binding AddRequestCommand}" Margin="5" Padding="10,5"/>
+                <Button Content="Add Req" Command="{Binding AddRequestCommand}" Margin="5" Padding="10,5"/>
+                <Button Content="Add Res" Command="{Binding AddResponseCommand}" Margin="5" Padding="10,5"/>
                 <Button Content="Edit" Command="{Binding EditFrameCommand}" Margin="5" Padding="10,5"/>
                 <Button Content="Delete" Command="{Binding DeleteFrameCommand}" Margin="5" Padding="10,5"/>
                 <Button Content="Save" Command="{Binding SaveCommand}" Margin="5" Padding="10,5"/>

@@ -16,6 +16,7 @@ namespace UdsTool.Models
         private ushort _dataIdentifier;
         private byte[] _data;
         private int _idx;
+        private int _responseIdx;
 
         [XmlAttribute("Idx")]
         public int Idx
@@ -113,6 +114,20 @@ namespace UdsTool.Models
 
         [XmlElement("RequestResponseType")]
         public RequestResponseType Type { get; set; }
+
+        [XmlElement("ResponseIdx")]
+        public int ResponseIdx
+        {
+            get => _responseIdx;
+            set
+            {
+                if (_responseIdx != value)
+                {
+                    _responseIdx = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         [XmlIgnore]
         public ObservableCollection<DiagnosticFrame> Children { get; set; } = new ObservableCollection<DiagnosticFrame>();
