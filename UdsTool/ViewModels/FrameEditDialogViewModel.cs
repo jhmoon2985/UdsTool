@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -53,11 +54,19 @@ namespace UdsTool.ViewModels
 
         private void InitializeValues()
         {
-            Name = "New Frame";
+            // 타입별 기본값 설정
+            if (Type == RequestResponseType.Request)
+            {
+                Name = "New Request";
+            }
+            else
+            {
+                Name = "New Response";
+            }
+
             SelectedServiceId = 0x10;
             SelectedSubFunction = 0x01;
             SelectedDid = 0xF186;
-            Type = RequestResponseType.Request;
             Data = "";
         }
 
@@ -174,7 +183,18 @@ namespace UdsTool.ViewModels
         public RequestResponseType Type
         {
             get => _type;
-            set { _type = value; OnPropertyChanged(); }
+            set
+            {
+                _type = value;
+
+                // 유형이 변경될 때 이름 자동 업데이트
+                if (_name == "New Request" || _name == "New Response" || string.IsNullOrEmpty(_name))
+                {
+                    Name = value == RequestResponseType.Request ? "New Request" : "New Response";
+                }
+
+                OnPropertyChanged();
+            }
         }
 
         public ICommand OkCommand { get; }
@@ -207,7 +227,8 @@ namespace UdsTool.ViewModels
                 SubFunction = _selectedSubFunction,
                 DataIdentifier = _selectedDid,
                 Type = Type,
-                Data = ParseData()
+                Data = ParseData(),
+                Children = new ObservableCollection<DiagnosticFrame>() // 컬렉션 초기화 확인
             };
         }
 

@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:UdsTool.Views"
              xmlns:behaviors="clr-namespace:UdsTool.Behaviors"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:models="clr-namespace:UdsTool.Models"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="1000">
     <Grid>
@@ -35,6 +36,12 @@
                 <Button Command="{Binding MoveDownCommand}" Margin="5" Padding="5" ToolTip="Move Down">
                     <Path Data="M0,0 L10,0 L5,5 Z" Fill="Black" Width="10" Height="10"/>
                 </Button>
+                <Button Command="{Binding AddRequestCommand}" Margin="5" Padding="5" ToolTip="Add Request">
+                    <TextBlock Text="RQ+" Foreground="Blue"/>
+                </Button>
+                <Button Command="{Binding AddResponseCommand}" Margin="5" Padding="5" ToolTip="Add Response">
+                    <TextBlock Text="RS+" Foreground="Green"/>
+                </Button>
             </StackPanel>
 
             <TreeView Grid.Row="2" 
@@ -43,20 +50,49 @@
                 <i:Interaction.Behaviors>
                     <behaviors:TreeViewBehavior SelectedItem="{Binding SelectedFrame, Mode=TwoWay}"/>
                 </i:Interaction.Behaviors>
+                <TreeView.Resources>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="True"/>
+                    </Style>
+                </TreeView.Resources>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding Idx, StringFormat='{}{0}. '}" FontWeight="Bold" Margin="0,0,5,0"/>
                             <TextBlock Text="{Binding Name}" Margin="0,0,10,0"/>
                             <TextBlock Text="{Binding ServiceId, StringFormat={}SID: 0x{0:X2}}" Margin="0,0,10,0"/>
-                            <TextBlock Text="{Binding Type}" FontStyle="Italic"/>
+                            <TextBlock Text="{Binding Type}" FontStyle="Italic">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Type}" Value="Request">
+                                                <Setter Property="Foreground" Value="Blue"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Type}" Value="Response">
+                                                <Setter Property="Foreground" Value="Green"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
+                <TreeView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Add Request" Command="{Binding AddRequestCommand}"/>
+                        <MenuItem Header="Add Response" Command="{Binding AddResponseToSelectedCommand}"/>
+                        <MenuItem Header="Edit Frame" Command="{Binding EditFrameCommand}"/>
+                        <MenuItem Header="Delete Frame" Command="{Binding DeleteFrameCommand}"/>
+                        <Separator/>
+                        <MenuItem Header="Move Up" Command="{Binding MoveUpCommand}"/>
+                        <MenuItem Header="Move Down" Command="{Binding MoveDownCommand}"/>
+                    </ContextMenu>
+                </TreeView.ContextMenu>
             </TreeView>
 
             <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="5">
-                <Button Content="Add" Command="{Binding AddFrameCommand}" Margin="5" Padding="10,5"/>
+                <Button Content="Add" Command="{Binding AddRequestCommand}" Margin="5" Padding="10,5"/>
                 <Button Content="Edit" Command="{Binding EditFrameCommand}" Margin="5" Padding="10,5"/>
                 <Button Content="Delete" Command="{Binding DeleteFrameCommand}" Margin="5" Padding="10,5"/>
                 <Button Content="Save" Command="{Binding SaveCommand}" Margin="5" Padding="10,5"/>

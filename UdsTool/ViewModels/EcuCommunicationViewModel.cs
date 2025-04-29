@@ -24,15 +24,21 @@ namespace UdsTool.ViewModels
             _ecuService = ecuService;
             _xmlService = xmlService;
 
-            DiagnosticFrames = new ObservableCollection<DiagnosticFrame>();
-            IsoTpSettings = new IsoTpSettings
+            // 초기화는 한 번만 수행
+            if (DiagnosticFrames == null)
             {
-                RequestCanId = 0x7E0,
-                ResponseCanId = 0x7E8,
-                FlowControlCanId = 0x7E0,
-                BlockSize = 0,
-                SeparationTime = 0
-            };
+                DiagnosticFrames = new ObservableCollection<DiagnosticFrame>();
+
+                // 기본 IsoTpSettings 설정
+                IsoTpSettings = new IsoTpSettings
+                {
+                    RequestCanId = 0x7E0,
+                    ResponseCanId = 0x7E8,
+                    FlowControlCanId = 0x7E0,
+                    BlockSize = 0,
+                    SeparationTime = 0
+                };
+            }
 
             ConnectCommand = new RelayCommand(_ => Connect(), _ => !IsConnected);
             DisconnectCommand = new RelayCommand(_ => Disconnect(), _ => IsConnected);
@@ -42,7 +48,9 @@ namespace UdsTool.ViewModels
             LoadFramesCommand = new RelayCommand(_ => LoadFrames());
             ClearLogCommand = new RelayCommand(_ => ClearLog());
 
-            _ecuService.DataReceived += OnDataReceived;
+            // 이벤트 핸들러 등록 (중복 등록 방지)
+            _ecuService.DataReceived -= OnDataReceived; // 기존 핸들러 제거
+            _ecuService.DataReceived += OnDataReceived; // 새 핸들러 등록
         }
 
         public ObservableCollection<DiagnosticFrame> DiagnosticFrames { get; }

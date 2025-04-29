@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Xml.Serialization;
 using UdsTool.Models;
+using System.Linq;
 
 namespace UdsTool.Services
 {
@@ -19,7 +20,7 @@ namespace UdsTool.Services
                 var serializer = new XmlSerializer(typeof(ObservableCollection<DiagnosticFrame>));
                 using (var writer = new StreamWriter(filePath))
                 {
-                    serializer.Serialize(writer, frames);
+                    serializer.Serialize(writer, orderedFrames);
                 }
             }
             catch (Exception ex)
@@ -35,7 +36,18 @@ namespace UdsTool.Services
                 var serializer = new XmlSerializer(typeof(ObservableCollection<DiagnosticFrame>));
                 using (var reader = new StreamReader(filePath))
                 {
-                    return (ObservableCollection<DiagnosticFrame>)serializer.Deserialize(reader);
+                    var loadedFrames = (ObservableCollection<DiagnosticFrame>)serializer.Deserialize(reader);
+
+                    // 자식 프레임 컬렉션 초기화 - XML 직렬화/역직렬화 과정에서 누락될 수 있음
+                    foreach (var frame in loadedFrames)
+                    {
+                        if (frame.Children == null)
+                        {
+                            frame.Children = new ObservableCollection<DiagnosticFrame>();
+                        }
+                    }
+
+                    return loadedFrames;
                 }
             }
             catch (Exception ex)
@@ -55,7 +67,7 @@ namespace UdsTool.Services
                 var serializer = new XmlSerializer(typeof(ObservableCollection<DiagnosticFrame>));
                 using (var writer = new StringWriter())
                 {
-                    serializer.Serialize(writer, frames);
+                    serializer.Serialize(writer, orderedFrames);
                     return writer.ToString();
                 }
             }

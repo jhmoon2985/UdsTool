@@ -61,26 +61,53 @@ namespace UdsTool.Behaviors
 
         private void OnTreeViewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Delete)
+            if (AssociatedObject.DataContext is XmlEditorViewModel viewModel)
             {
-                if (AssociatedObject.SelectedItem is DiagnosticFrame frame)
+                if (e.Key == Key.Delete)
                 {
-                    if (AssociatedObject.DataContext is XmlEditorViewModel viewModel)
+                    if (AssociatedObject.SelectedItem is DiagnosticFrame frame)
                     {
                         viewModel.DeleteFrameCommand.Execute(frame);
                         e.Handled = true;
                     }
                 }
-            }
-            else if (e.Key == Key.F2)
-            {
-                if (AssociatedObject.SelectedItem is DiagnosticFrame frame)
+                else if (e.Key == Key.F2)
                 {
-                    if (AssociatedObject.DataContext is XmlEditorViewModel viewModel)
+                    if (AssociatedObject.SelectedItem is DiagnosticFrame frame)
                     {
                         viewModel.EditFrameCommand.Execute(frame);
                         e.Handled = true;
                     }
+                }
+                else if (e.Key == Key.Insert)
+                {
+                    if (AssociatedObject.SelectedItem is DiagnosticFrame frame)
+                    {
+                        if (frame.Type == RequestResponseType.Request)
+                        {
+                            viewModel.AddResponseToSelectedCommand.Execute(frame);
+                        }
+                        else
+                        {
+                            viewModel.AddRequestCommand.Execute(null);
+                        }
+                        e.Handled = true;
+                    }
+                    else
+                    {
+                        viewModel.AddRequestCommand.Execute(null);
+                        e.Handled = true;
+                    }
+                }
+                else if (e.Key == Key.Up && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                {
+                    viewModel.MoveUpCommand.Execute(null);
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.Down && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                {
+                    viewModel.MoveDownCommand.Execute(null);
+                    e.Handled = true;
                 }
             }
         }
