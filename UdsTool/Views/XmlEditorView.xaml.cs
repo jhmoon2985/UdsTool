@@ -9,13 +9,5 @@ namespace UdsTool.Views
         {
             InitializeComponent();
         }
-
-        private void TreeView_SelectedItemChanged(object sender, System.Windows.RoutedPropertyChangedEventArgs<object> e)
-        {
-            if (DataContext is XmlEditorViewModel viewModel)
-            {
-                viewModel.SelectedFrame = e.NewValue as Models.DiagnosticFrame;
-            }
-        }
     }
 }

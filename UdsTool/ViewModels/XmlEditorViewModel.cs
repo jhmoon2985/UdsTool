@@ -34,7 +34,7 @@ namespace UdsTool.ViewModels
             {
                 DiagnosticFrames = new ObservableCollection<DiagnosticFrame>();
                 DiagnosticFrames.CollectionChanged += DiagnosticFrames_CollectionChanged;
-
+                
                 RequestFrames = new ObservableCollection<DiagnosticFrame>();
                 ResponseFrames = new ObservableCollection<DiagnosticFrame>();
             }
@@ -249,17 +249,11 @@ namespace UdsTool.ViewModels
         {
             var dialogViewModel = new FrameEditDialogViewModel();
             dialogViewModel.Type = type;
-
-            // Request 목록을 ResponseIdx 콤보박스에 설정
-            if (type == RequestResponseType.Response)
+            
+            // Request 타입인 경우에만 Response 목록 설정
+            if (type == RequestResponseType.Request)
             {
-                dialogViewModel.AvailableRequests = RequestFrames.ToDictionary(r => r.Idx, r => r.Name);
-
-                // 선택된 Request가 있으면 해당 값을 기본값으로 설정
-                if (SelectedRequestFrame != null)
-                {
-                    dialogViewModel.SelectedRequestIdx = SelectedRequestFrame.Idx;
-                }
+                dialogViewModel.AvailableResponses = ResponseFrames.ToDictionary(r => r.Idx, r => r.Name);
             }
 
             if (_dialogService.ShowDialog(dialogViewModel) == true)
@@ -270,16 +264,16 @@ namespace UdsTool.ViewModels
                 if (type == RequestResponseType.Request)
                 {
                     newFrame.Idx = GetNextRequestIdx();
+                    
+                    // ResponseIdx 설정 - 선택된 값 사용
+                    newFrame.ResponseIdx = dialogViewModel.SelectedResponseIdx;
+                    
                     RequestFrames.Add(newFrame);
                     SelectedRequestFrame = newFrame;
                 }
                 else // Response
                 {
                     newFrame.Idx = GetNextResponseIdx();
-
-                    // ResponseIdx 설정 - 다이얼로그에서 선택된 Request의 Idx 사용
-                    newFrame.ResponseIdx = dialogViewModel.SelectedRequestIdx;
-
                     ResponseFrames.Add(newFrame);
                     SelectedResponseFrame = newFrame;
                 }
@@ -300,21 +294,103 @@ namespace UdsTool.ViewModels
                 dialogViewModel.Type = RequestResponseType.Response;
                 dialogViewModel.SelectedServiceId = SelectedRequestFrame.ServiceId;
 
-                // Request 목록을 ResponseIdx 콤보박스에 설정
-                dialogViewModel.AvailableRequests = RequestFrames.ToDictionary(r => r.Idx, r => r.Name);
-                dialogViewModel.SelectedRequestIdx = SelectedRequestFrame.Idx;
-
                 if (_dialogService.ShowDialog(dialogViewModel) == true)
                 {
                     var newFrame = dialogViewModel.GetFrame();
                     newFrame.Idx = GetNextResponseIdx();
-                    newFrame.ResponseIdx = dialogViewModel.SelectedRequestIdx;
 
                     ResponseFrames.Add(newFrame);
                     DiagnosticFrames.Add(newFrame);
-
+                    
                     SelectedResponseFrame = newFrame;
                     SelectedFrame = newFrame;
+                    
+                    UpdateXmlView();
+                }
+            }
+        }
+
+        // Request 프레임 편집
+        private void EditRequestFrame(DiagnosticFrame requestFrame)
+        {
+            if (requestFrame != null && requestFrame.Type == RequestResponseType.Request)
+            {
+                var dialogViewModel = new FrameEditDialogViewModel(requestFrame);
+                
+                // Request 편집 시 Response 목록 제공
+                dialogViewModel.AvailableResponses = ResponseFrames.ToDictionary(r => r.Idx, r => r.Name);
+                
+                // 기존에 연결된 Response가 있으면 선택
+                if (requestFrame.ResponseIdx > 0)
+                {
+                    dialogViewModel.SelectedResponseIdx = requestFrame.ResponseIdx;
+                }
+                
+                if (_dialogService.ShowDialog(dialogViewModel) == true)
+                {
+                    var updatedFrame = dialogViewModel.GetFrame();
+                    
+                    // 기존 인덱스 유지
+                    updatedFrame.Idx = requestFrame.Idx;
+                    
+                    // Response Index 설정
+                    updatedFrame.ResponseIdx = dialogViewModel.SelectedResponseIdx;
+                    
+                    // Request 목록에서 업데이트
+                    int index = RequestFrames.IndexOf(requestFrame);
+                    if (index >= 0)
+                    {
+                        RequestFrames[index] = updatedFrame;
+                    }
+
+                    // 전체 프레임 목록에서도 업데이트
+                    int diagIndex = DiagnosticFrames.IndexOf(requestFrame);
+                    if (diagIndex >= 0)
+                    {
+                        DiagnosticFrames[diagIndex] = updatedFrame;
+                    }
+
+                    // 선택된 프레임 업데이트
+                    SelectedRequestFrame = updatedFrame;
+                    SelectedFrame = updatedFrame;
+
+                    UpdateXmlView();
+                }
+            }
+        }
+        
+        // Response 프레임 편집
+        private void EditResponseFrame(DiagnosticFrame responseFrame)
+        {
+            if (responseFrame != null && responseFrame.Type == RequestResponseType.Response)
+            {
+                var dialogViewModel = new FrameEditDialogViewModel(responseFrame);
+                
+                if (_dialogService.ShowDialog(dialogViewModel) == true)
+                {
+                    var updatedFrame = dialogViewModel.GetFrame();
+                    
+                    // 기존 인덱스 유지
+                    updatedFrame.Idx = responseFrame.Idx;
+                    updatedFrame.ResponseIdx = responseFrame.ResponseIdx;
+
+                    // Response 목록에서 업데이트
+                    int index = ResponseFrames.IndexOf(responseFrame);
+                    if (index >= 0)
+                    {
+                        ResponseFrames[index] = updatedFrame;
+                    }
+
+                    // 전체 프레임 목록에서도 업데이트
+                    int diagIndex = DiagnosticFrames.IndexOf(responseFrame);
+                    if (diagIndex >= 0)
+                    {
+                        DiagnosticFrames[diagIndex] = updatedFrame;
+                    }
+
+                    // 선택된 프레임 업데이트
+                    SelectedResponseFrame = updatedFrame;
+                    SelectedFrame = updatedFrame;
 
                     UpdateXmlView();
                 }
@@ -325,65 +401,13 @@ namespace UdsTool.ViewModels
         {
             if (SelectedFrame != null)
             {
-                var dialogViewModel = new FrameEditDialogViewModel(SelectedFrame);
-
-                // Response 편집 시 Request 목록 추가
-                if (SelectedFrame.Type == RequestResponseType.Response)
+                if (SelectedFrame.Type == RequestResponseType.Request)
                 {
-                    dialogViewModel.AvailableRequests = RequestFrames.ToDictionary(r => r.Idx, r => r.Name);
-                    dialogViewModel.SelectedRequestIdx = SelectedFrame.ResponseIdx;
+                    EditRequestFrame(SelectedFrame);
                 }
-
-                if (_dialogService.ShowDialog(dialogViewModel) == true)
+                else
                 {
-                    var updatedFrame = dialogViewModel.GetFrame();
-
-                    // 기존 인덱스 유지
-                    updatedFrame.Idx = SelectedFrame.Idx;
-
-                    // Response인 경우 ResponseIdx 업데이트
-                    if (updatedFrame.Type == RequestResponseType.Response)
-                    {
-                        updatedFrame.ResponseIdx = dialogViewModel.SelectedRequestIdx;
-                    }
-
-                    // Request 또는 Response 목록에서 업데이트
-                    if (updatedFrame.Type == RequestResponseType.Request)
-                    {
-                        int index = RequestFrames.IndexOf(SelectedFrame);
-                        if (index >= 0)
-                        {
-                            RequestFrames[index] = updatedFrame;
-                        }
-                    }
-                    else // Response
-                    {
-                        int index = ResponseFrames.IndexOf(SelectedFrame);
-                        if (index >= 0)
-                        {
-                            ResponseFrames[index] = updatedFrame;
-                        }
-                    }
-
-                    // 전체 프레임 목록에서도 업데이트
-                    int diagIndex = DiagnosticFrames.IndexOf(SelectedFrame);
-                    if (diagIndex >= 0)
-                    {
-                        DiagnosticFrames[diagIndex] = updatedFrame;
-                    }
-
-                    // 선택된 프레임 업데이트
-                    if (updatedFrame.Type == RequestResponseType.Request)
-                    {
-                        SelectedRequestFrame = updatedFrame;
-                    }
-                    else
-                    {
-                        SelectedResponseFrame = updatedFrame;
-                    }
-                    SelectedFrame = updatedFrame;
-
-                    UpdateXmlView();
+                    EditResponseFrame(SelectedFrame);
                 }
             }
         }
@@ -392,73 +416,29 @@ namespace UdsTool.ViewModels
         {
             if (SelectedFrame != null)
             {
-                // Request를 삭제하는 경우, 연결된 Response도 삭제
-                if (SelectedFrame.Type == RequestResponseType.Request)
-                {
-                    var relatedResponses = ResponseFrames.Where(r => r.ResponseIdx == SelectedFrame.Idx).ToList();
-                    foreach (var response in relatedResponses)
-                    {
-                        ResponseFrames.Remove(response);
-                        DiagnosticFrames.Remove(response);
-                    }
-
-                    RequestFrames.Remove(SelectedFrame);
-                }
-                else // Response 삭제
-                {
-                    ResponseFrames.Remove(SelectedFrame);
-                }
-
-                // 전체 프레임 목록에서도 삭제
+                // 전체 프레임 목록에서 삭제
                 DiagnosticFrames.Remove(SelectedFrame);
-
-                // 삭제 후 남은 프레임들의 인덱스 재정렬
-                ReindexAllFrames();
-
-                // 선택된 프레임 초기화
+                
                 if (SelectedFrame.Type == RequestResponseType.Request)
                 {
+                    RequestFrames.Remove(SelectedFrame);
                     SelectedRequestFrame = null;
                 }
-                else
+                else // Response
                 {
+                    ResponseFrames.Remove(SelectedFrame);
                     SelectedResponseFrame = null;
                 }
+                
                 SelectedFrame = null;
-
+                
+                // 삭제 후 남은 프레임들의 인덱스 재정렬
+                ReindexAllFrames();
+                
                 UpdateXmlView();
             }
         }
-        // ... (기존 코드는 유지)
-
-        // 다음 사용 가능한 Request Idx 값 가져오기
-        private int GetNextRequestIdx()
-        {
-            int maxIdx = 0;
-
-            // Request 프레임에서 최대 Idx 찾기
-            foreach (var frame in RequestFrames)
-            {
-                maxIdx = Math.Max(maxIdx, frame.Idx);
-            }
-
-            return maxIdx + 1;
-        }
-
-        // 다음 사용 가능한 Response Idx 값 가져오기
-        private int GetNextResponseIdx()
-        {
-            int maxIdx = 0;
-
-            // Response 프레임에서 최대 Idx 찾기
-            foreach (var frame in ResponseFrames)
-            {
-                maxIdx = Math.Max(maxIdx, frame.Idx);
-            }
-
-            return maxIdx + 1;
-        }
-
+        
         // 모든 프레임의 인덱스를 재정렬하는 메서드
         private void ReindexAllFrames()
         {
@@ -621,13 +601,27 @@ namespace UdsTool.ViewModels
             }
         }
 
-        // 다음 사용 가능한 Idx 값 가져오기
-        private int GetNextIdx()
+        // 다음 사용 가능한 Request Idx 값 가져오기
+        private int GetNextRequestIdx()
         {
             int maxIdx = 0;
 
-            // 모든 프레임에서 최대 Idx 찾기
-            foreach (var frame in DiagnosticFrames)
+            // Request 프레임에서 최대 Idx 찾기
+            foreach (var frame in RequestFrames)
+            {
+                maxIdx = Math.Max(maxIdx, frame.Idx);
+            }
+
+            return maxIdx + 1;
+        }
+
+        // 다음 사용 가능한 Response Idx 값 가져오기
+        private int GetNextResponseIdx()
+        {
+            int maxIdx = 0;
+
+            // Response 프레임에서 최대 Idx 찾기
+            foreach (var frame in ResponseFrames)
             {
                 maxIdx = Math.Max(maxIdx, frame.Idx);
             }

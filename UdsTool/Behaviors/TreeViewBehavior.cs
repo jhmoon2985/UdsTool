@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using Microsoft.Xaml.Behaviors;
 using UdsTool.Models;
 using UdsTool.ViewModels;
@@ -37,6 +38,7 @@ namespace UdsTool.Behaviors
                 listView.SelectionChanged += OnListViewSelectionChanged;
                 listView.MouseDoubleClick += OnListViewMouseDoubleClick;
                 listView.KeyDown += OnListViewKeyDown;
+                listView.PreviewMouseLeftButtonUp += ListView_PreviewMouseLeftButtonUp;
             }
         }
 
@@ -55,6 +57,7 @@ namespace UdsTool.Behaviors
                 listView.SelectionChanged -= OnListViewSelectionChanged;
                 listView.MouseDoubleClick -= OnListViewMouseDoubleClick;
                 listView.KeyDown -= OnListViewKeyDown;
+                listView.PreviewMouseLeftButtonUp -= ListView_PreviewMouseLeftButtonUp;
             }
         }
 
@@ -92,6 +95,35 @@ namespace UdsTool.Behaviors
             }
         }
 
+        private void ListView_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            var listView = (ListView)sender;
+            var point = e.GetPosition(listView);
+            var hitTestResult = VisualTreeHelper.HitTest(listView, point);
+
+            if (hitTestResult == null)
+                return;
+
+            // 클릭된 UI 요소를 찾음
+            DependencyObject hitElement = hitTestResult.VisualHit;
+            while (hitElement != null && !(hitElement is ListViewItem))
+            {
+                hitElement = VisualTreeHelper.GetParent(hitElement);
+            }
+
+            if (hitElement is ListViewItem item)
+            {
+                // 클릭된 아이템의 데이터 컨텍스트 가져오기
+                var clickedItem = item.DataContext;
+
+                if (clickedItem is DiagnosticFrame frame)
+                {
+                    // 현재 선택된 아이템과 동일해도 Command 실행
+                    SelectedItem = clickedItem;
+                }
+            }
+        }
+
         private void OnTreeViewMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (AssociatedObject.DataContext is XmlEditorViewModel viewModel &&
@@ -106,6 +138,7 @@ namespace UdsTool.Behaviors
             if (AssociatedObject.DataContext is XmlEditorViewModel viewModel &&
                 ((ListView)sender).SelectedItem is DiagnosticFrame frame)
             {
+                SelectedItem = ((ListView)sender).SelectedItem;
                 viewModel.EditFrameCommand.Execute(frame);
             }
         }

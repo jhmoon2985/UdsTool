@@ -22,12 +22,12 @@ namespace UdsTool.ViewModels
         private string _didHex;
         private string _data;
         private int _idx;
-        private int _selectedRequestIdx;
+        private int _selectedResponseIdx;
         private string _responseIdxText;
         private RequestResponseType _type;
         private ICloseable _window;
         private Dictionary<byte, string> _subFunctions;
-        private Dictionary<int, string> _availableRequests;
+        private Dictionary<int, string> _availableResponses;
 
         public FrameEditDialogViewModel()
         {
@@ -47,12 +47,12 @@ namespace UdsTool.ViewModels
                 SelectedSubFunction = frame.SubFunction;
                 SelectedDid = frame.DataIdentifier;
                 Type = frame.Type;
-
-                // Response의 경우 ResponseIdx 설정
-                if (frame.Type == RequestResponseType.Response)
+                
+                // Request인 경우에 연결된 Response 인덱스 설정
+                if (frame.Type == RequestResponseType.Request)
                 {
-                    SelectedRequestIdx = frame.ResponseIdx;
-                    ResponseIdxText = frame.ResponseIdx.ToString();
+                    SelectedResponseIdx = 0; // 기본값 설정
+                    ResponseIdxText = "0";
                 }
 
                 if (frame.Data != null && frame.Data.Length > 0)
@@ -78,9 +78,9 @@ namespace UdsTool.ViewModels
             SelectedSubFunction = 0x01;
             SelectedDid = 0xF186;
             Data = "";
-            SelectedRequestIdx = 0;
+            SelectedResponseIdx = 0;
             ResponseIdxText = "0";
-            AvailableRequests = new Dictionary<int, string>();
+            AvailableResponses = new Dictionary<int, string>();
         }
 
         public void SetWindow(ICloseable window)
@@ -100,24 +100,24 @@ namespace UdsTool.ViewModels
             set { _idx = value; }
         }
 
-        // Request 콤보박스용 속성
-        public Dictionary<int, string> AvailableRequests
+        // Response 콤보박스용 속성
+        public Dictionary<int, string> AvailableResponses
         {
-            get => _availableRequests;
-            set
-            {
-                _availableRequests = value;
+            get => _availableResponses;
+            set 
+            { 
+                _availableResponses = value; 
                 OnPropertyChanged();
             }
         }
 
-        // 콤보박스에서 선택된 Request의 Idx
-        public int SelectedRequestIdx
+        // 콤보박스에서 선택된 Response의 Idx
+        public int SelectedResponseIdx
         {
-            get => _selectedRequestIdx;
-            set
-            {
-                _selectedRequestIdx = value;
+            get => _selectedResponseIdx;
+            set 
+            { 
+                _selectedResponseIdx = value; 
                 ResponseIdxText = value.ToString();
                 OnPropertyChanged();
             }
@@ -132,7 +132,7 @@ namespace UdsTool.ViewModels
                 _responseIdxText = value;
                 if (int.TryParse(value, out int result))
                 {
-                    _selectedRequestIdx = result;
+                    _selectedResponseIdx = result;
                 }
                 OnPropertyChanged();
             }
@@ -245,13 +245,14 @@ namespace UdsTool.ViewModels
                 }
 
                 OnPropertyChanged();
-                // Response 타입이 사용하는 속성들의 가시성 업데이트를 위해 알림
-                OnPropertyChanged(nameof(IsResponseType));
+                // Request 타입이 사용하는 속성들의 가시성 업데이트를 위해 알림
+                OnPropertyChanged(nameof(IsRequestType));
             }
         }
 
-        // ResponseIdx 관련 컨트롤의 가시성 제어를 위한 속성
-        public bool IsResponseType => Type == RequestResponseType.Response;
+        // Response 콤보박스의 가시성 제어를 위한 속성
+        // Request 타입일 때만 콤보박스를 표시
+        public bool IsRequestType => Type == RequestResponseType.Request;
 
         public ICommand OkCommand { get; }
         public ICommand CancelCommand { get; }
@@ -275,7 +276,7 @@ namespace UdsTool.ViewModels
 
         public DiagnosticFrame GetFrame()
         {
-            return new DiagnosticFrame
+            var frame = new DiagnosticFrame
             {
                 Idx = Idx,
                 Name = Name,
@@ -283,10 +284,17 @@ namespace UdsTool.ViewModels
                 SubFunction = _selectedSubFunction,
                 DataIdentifier = _selectedDid,
                 Type = Type,
-                ResponseIdx = Type == RequestResponseType.Response ? _selectedRequestIdx : 0,
                 Data = ParseData(),
                 Children = new ObservableCollection<DiagnosticFrame>() // 컬렉션 초기화 확인
             };
+            
+            // Request 타입일 때만 ResponseIdx 설정
+            if (Type == RequestResponseType.Request)
+            {
+                frame.ResponseIdx = _selectedResponseIdx;
+            }
+            
+            return frame;
         }
 
         private byte[] ParseData()
@@ -310,8 +318,8 @@ namespace UdsTool.ViewModels
                     ParseData();
                 }
 
-                // Response인 경우 ResponseIdx 유효성 검사
-                if (Type == RequestResponseType.Response)
+                // Request인 경우 ResponseIdx 유효성 검사
+                if (Type == RequestResponseType.Request)
                 {
                     // ResponseIdxText가 유효한 정수인지 확인
                     if (!int.TryParse(ResponseIdxText, out _))

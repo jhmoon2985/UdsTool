@@ -89,19 +89,19 @@
             </ComboBox.Items>
         </ComboBox>
 
-        <!-- Response To (Request ID) -->
-        <TextBlock Text="Response To:" Grid.Row="5" VerticalAlignment="Center" Margin="0,5"
-                  Visibility="{Binding IsResponseType, Converter={StaticResource LocalBoolToVisibilityConverter}}"/>
-        <ComboBox ItemsSource="{Binding AvailableRequests}" 
-                  SelectedValue="{Binding SelectedRequestIdx}"
+        <!-- Response To (Request일 때만 표시) -->
+        <TextBlock Text="Response ID:" Grid.Row="5" VerticalAlignment="Center" Margin="0,5"
+                  Visibility="{Binding IsRequestType, Converter={StaticResource LocalBoolToVisibilityConverter}}"/>
+        <ComboBox ItemsSource="{Binding AvailableResponses}" 
+                  SelectedValue="{Binding SelectedResponseIdx}"
                   DisplayMemberPath="Value"
                   SelectedValuePath="Key"
                   Grid.Row="5" Grid.Column="1" Margin="0,5"
-                  Visibility="{Binding IsResponseType, Converter={StaticResource LocalBoolToVisibilityConverter}}"/>
+                  Visibility="{Binding IsRequestType, Converter={StaticResource LocalBoolToVisibilityConverter}}"/>
         <TextBox Text="{Binding ResponseIdxText, UpdateSourceTrigger=PropertyChanged}" 
                  Grid.Row="5" Grid.Column="2" Margin="5,5,0,5"
-                 Visibility="{Binding IsResponseType, Converter={StaticResource LocalBoolToVisibilityConverter}}">
-            <TextBox.ToolTip>Enter Request ID directly</TextBox.ToolTip>
+                 Visibility="{Binding IsRequestType, Converter={StaticResource LocalBoolToVisibilityConverter}}">
+            <TextBox.ToolTip>Enter Response ID directly</TextBox.ToolTip>
         </TextBox>
 
         <!-- Data -->
