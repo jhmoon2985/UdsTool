@@ -4,7 +4,8 @@
              xmlns:local="clr-namespace:UdsTool"
              xmlns:converters="clr-namespace:UdsTool.Converters"
              xmlns:viewModels="clr-namespace:UdsTool.ViewModels"
-             xmlns:views="clr-namespace:UdsTool.Views">
+             xmlns:views="clr-namespace:UdsTool.Views"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     <Application.Resources>
         <!-- Converters -->
         <converters:BoolToConnectionStatusConverter x:Key="BoolToConnectionStatusConverter"/>
